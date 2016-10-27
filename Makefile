@@ -31,6 +31,9 @@ LN=ln
 FIND=find
 MKDIR=mkdir -p
 SETENV=env
+ECHO_CMD=@echo
+ECHO_TIME=${ECHO_CMD} `date +"%s"`
+WRKDIR_MAKE=[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
 
 KERNCONF+=${CONFIGS}
 MAKE_ARGS+=KERNCONF="${KERNCONF:C/^\w*(.*)/\\1/}"
@@ -42,22 +45,37 @@ tag:
 	fi
 
 config:
+	${WRKDIR_MAKE}
+	${ECHO_CMD} "== PHASE: Install Config =="
+	${ECHO_TIME} > ${WRKDIR}/config.start
 	@for _cfg in ${CONFIGS}; do \
 		if [ ! -e "${CONFDEST}/$${_cfg}" ]; then \
 			${LN} -s "${CONFTOP}/${CONFPREFIX}$${_cfg}" "${CONFDEST}/$${_cfg}"; \
 		fi; \
 	done
+	${ECHO_TIME} > ${WRKDIR}/config.end
+	${ECHO_CMD} "== END PHASE: Install Config (" $$((`cat ${WRKDIR}/config.end` - `cat ${WRKDIR}/config.start`)) "s) =="
 
 build-world:	config
-	(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} buildworld)
+	${ECHO_CMD} "== PHASE: Build World =="
+	${ECHO_TIME} > ${WRKDIR}/build-world.start
+	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} buildworld)
+	${ECHO_TIME} > ${WRKDIR}/build-world.end
+	${ECHO_CMD} "== END PHASE: Build World (" $$((`cat ${WRKDIR}/build-word.end` - `cat ${WRKDIR}/build-world.start`)) "s) =="
 
 build-kernel:	config
-	(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} buildkernel)
+	${ECHO_CMD} "== PHASE: Build Kernel =="
+	${ECHO_TIME} > ${WRKDIR}/build-kernel.start
+	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} buildkernel)
+	${ECHO_TIME} > ${WRKDIR}/build-kernel.end
+	${ECHO_CMD} "== END PHASE: Build Kernel (" $$((`cat ${WRKDIR}/build-kernel.end` - `cat ${WRKDIR}/build-kernel.start`)) "s) =="
 
 build:		tag config build-world build-kernel
 
 packages:	build
-	(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} packages)
+	${ECHO_CMD} "== PHASE: Install Packages =="
+	${ECHO_TIME} > ${WRKDIR}/packages.start
+	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} packages)
 	@if [ ! -d ${PKGTOP} ]; then \
 		${MKDIR} ${PKGTOP}; \
 	fi;
@@ -65,3 +83,6 @@ packages:	build
 	@if [ ! -e ${PKGTOP}/repo ]; then \
 		${LN} -s ${OBJTOP}/${SRCTOP}/repo ${PKGTOP}/repo; \
 	fi;
+
+	${ECHO_TIME} > ${WRKDIR}/packages.end
+	${ECHO_CMD} "== END PHASE: Install Packages (" $$((`cat ${WRKDIR}/packages.end` - `cat ${WRKDIR}/packages.start`)) "s) =="
