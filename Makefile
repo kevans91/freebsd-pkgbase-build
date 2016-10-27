@@ -1,8 +1,9 @@
 # pkgbase Build Script
 
+PREFIX?=/usr/local
 OBJTOP?=/usr/obj
 SRCTOP?=/usr/src
-PKGTOP?=/usr/local/pkgbase
+PKGTOP?=${PREFIX}/pkgbase
 CONFTOP?=${.CURDIR}/files
 SRCCONF=${SRCTOP}
 MAKE_ARGS+=NO_INSTALLEXTRAKERNELS=no
