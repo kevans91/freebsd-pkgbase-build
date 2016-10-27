@@ -21,5 +21,5 @@ All of these names are subject to change in the future, because they seem like a
 * `CONFTOP`: (Default: `files/`) Where to find configuration files
 * `PKGTOP`: (Default: `$PREFIX/pkgbase`) Parent directory for the repo symlink
 * `MAKE_ENV`: (Default: none) Environment to run make in
-* `MAKE_ARGS`: (Default: `NO_INSTALLEXTRAKERNELS=no -j$hw.ncpu KERNCONF="$KERNCONF") Args to be passed to make
+* `MAKE_ARGS`: (Default: `NO_INSTALLEXTRAKERNELS=no -j$hw.ncpu KERNCONF="$KERNCONF"`) Args to be passed to make
 * `CONFPREFIX`: (Default: `conf-`) Prefix to be used for configuration files in $CONFTOP -- this prefix will be stripped from the files when symlinks are created in src/sys/$ARCH/conf
