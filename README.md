@@ -23,3 +23,4 @@ All of these names are subject to change in the future, because they seem like a
 * `MAKE_ENV`: (Default: none) Environment to run make in
 * `MAKE_ARGS`: (Default: `NO_INSTALLEXTRAKERNELS=no -j$hw.ncpu KERNCONF="$KERNCONF"`) Args to be passed to make
 * `CONFPREFIX`: (Default: `conf-`) Prefix to be used for configuration files in $CONFTOP -- this prefix will be stripped from the files when symlinks are created in src/sys/$ARCH/conf
+* `IGNOREEXPR`: (Default: none) Regex to use in discarding some config files from the build

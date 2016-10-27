@@ -5,11 +5,13 @@ OBJTOP?=/usr/obj
 SRCTOP?=/usr/src
 PKGTOP?=${PREFIX}/pkgbase
 CONFTOP?=${.CURDIR}/files
+WRKDIR?=${.CURDIR}/work
 MAKE_ARGS+=NO_INSTALLEXTRAKERNELS=no
 KERNCONF?=GENERIC
 
 # Only pull files from ${CONFTOP} with this prefix
 CONFPREFIX?=conf-
+IGNOREEXPR?=
 
 MACHINE!=hostname | cut -d"." -f"1"
 ARCH!=uname -p
@@ -23,7 +25,11 @@ TAGDATE!=date +'%Y%m%d-%H%M%S'
 TAGNAME="build/${BUILDTAG}/${TAGDATE}"
 
 CONFPATTERN=${CONFPREFIX}(.+)
+.if ${IGNOREEXPR} != ""
+CONFIGFILES!=find -E ${CONFTOP} -regex "${CONFTOP}/${CONFPATTERN}" ! -regex ${IGNOREEXPR}
+.else
 CONFIGFILES!=find -E ${CONFTOP} -regex "${CONFTOP}/${CONFPATTERN}"
+.endif
 CONFIGS=${CONFIGFILES:C/${CONFTOP}\///:C/${CONFPATTERN}/\1/}
 CONFDEST=${SRCTOP}/sys/${BUILDARCH}/conf
 
