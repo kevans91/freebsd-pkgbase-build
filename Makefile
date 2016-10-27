@@ -5,12 +5,11 @@ OBJTOP?=/usr/obj
 SRCTOP?=/usr/src
 PKGTOP?=${PREFIX}/pkgbase
 CONFTOP?=${.CURDIR}/files
-SRCCONF=${SRCTOP}
 MAKE_ARGS+=NO_INSTALLEXTRAKERNELS=no
 KERNCONF?=GENERIC
 
 # Only pull files from ${CONFTOP} with this prefix
-CONFPREFIX=conf-
+CONFPREFIX?=conf-
 
 MACHINE!=hostname | cut -d"." -f"1"
 ARCH!=uname -p
