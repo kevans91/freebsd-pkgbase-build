@@ -6,6 +6,7 @@ SRCTOP?=	/usr/src
 PKGTOP?=	${PREFIX}/pkgbase
 CONFTOP?=	${.CURDIR}/files
 WRKDIR?=	${.CURDIR}/work
+MAKE_ARGS+=	${PKGBASE_MAKE_ARGS}
 MAKE_ARGS+=	NO_INSTALLEXTRAKERNELS=no
 KERNCONF?=	GENERIC
 
@@ -27,12 +28,21 @@ TAGDATE!=		date +'%Y%m%d-%H%M%S'
 
 ARCH_DIRS!=		find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!!g' -e 's!${CONFTOP}!!g'
 
+LN=				ln
+FIND=			find
+MKDIR=			mkdir -p
+SETENV=			env
+ECHO_CMD=		@echo
+ECHO_TIME=		${ECHO_CMD} `date +"%s"`
+WRKDIR_MAKE=	[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
 CONFPATTERN=${CONFPREFIX}(.+)
+
 .for _arch in ${ARCH_DIRS}
 BUILDARCH+=		${_arch}
 TARGET_${_arch}=	${_arch:C/\..+//}
 TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
 BUILDTAG_${_arch}=	${TARGET_ARCH_${_arch}}
+OBJDIRPREFIX_${_arch}=	${OBJTOP}/${_arch}
 TAG_CMDS+=		"git tag build/${BUILDTAG_${_arch}}/${TAGDATE}"
 ARCHTOP_${_arch}=	${CONFTOP}/${_arch}
 
@@ -44,33 +54,45 @@ CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/$
 
 CONFIGS_${_arch}=	${CONFIGFILES_${_arch}:C/${ARCHTOP_${_arch}}\///:C/${CONFPATTERN}/\1/}
 CONFDEST_${_arch}=	${SRCTOP}/sys/${TARGET_${_arch}}/conf
-MAKE_ARGS_${_arch}+=	${MAKE_ARGS} TARGET=${TARGET_${_arch}} TARGET_ARCH=${TARGET_ARCH_${_arch}} KERNCONF="${CONFIGS_${_arch}:C/^\w*(.*)/\\1/}"
+MAKE_ARGS_${_arch}+=	${MAKE_ARGS} MAKEOBJDIRPREFIX=${OBJDIRPREFIX_${_arch}} TARGET=${TARGET_${_arch}} TARGET_ARCH=${TARGET_ARCH_${_arch}} KERNCONF="${CONFIGS_${_arch}:C/^\w*(.*)/\\1/}"
+
+tag-${_arch}:
+	@if [ "${NOTAG}" == "" ]; then \
+		(cd ${SRCTOP} && git tag "build/${BUILDTAG_${_arch}}/${TAGDATE}"); \
+	fi
+
+config-${_arch}:
+	@for _cfg in ${CONFIGS_${_arch}}; do \
+		if [ ! -e "${CONFDEST_${_arch}}/$${_cfg}" ]; then \
+			${LN} -s "${ARCHTOP_${_arch}}/${CONFPREFIX}$${_cfg}" "${CONFDEST_${_arch}}/$${_cfg}"; \
+		fi; \
+	done
+
+build-world-${_arch}:
+	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildworld)
+
+build-kernel-${_arch}:
+	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildkernel)
+
+packages-${_arch}:
+	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make MAKEOBJDIRPREFIX=${OBJDIRPREFIX_${_arch}} packages)
+
+TAG_TGTS+=		tag-${_arch}
+CONFIG_TGTS+=		config-${_arch}
+BUILDWORLD_TGTS+=	build-world-${_arch}
+BUILDKERNEL_TGTS+=	build-kernel-${_arch}
+PACKAGE_TGTS+=		packages-${_arch}
 .endfor
 
-
-LN=				ln
-FIND=			find
-MKDIR=			mkdir -p
-SETENV=			env
-ECHO_CMD=		@echo
-ECHO_TIME=		${ECHO_CMD} `date +"%s"`
-WRKDIR_MAKE=	[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
-
-tag:
-	@if [ "${NOTAG}" == "" ]; then \
-		for _tagcmd in ${TAG_CMDS}; do \
-			(cd ${SRCTOP} && $${_tagcmd}); \
-		done; \
-	fi
+tag:	${TAG_TGTS}
 
 config:
 	${WRKDIR_MAKE}
 	${ECHO_CMD} "== PHASE: Install Config =="
 	${ECHO_TIME} > ${WRKDIR}/config.start
-	@for _cfg in ${CONFIGS}; do \
-		if [ ! -e "${CONFDEST}/$${_cfg}" ]; then \
-			${LN} -s "${CONFTOP}/${CONFPREFIX}$${_cfg}" "${CONFDEST}/$${_cfg}"; \
-		fi; \
+	@for tgt in ${CONFIG_TGTS}; do \
+		echo $${tgt}; \
+		(cd ${.CURDIR} && make $${tgt}); \
 	done
 	${ECHO_TIME} > ${WRKDIR}/config.end
 	${ECHO_CMD} "== END PHASE: Install Config (" $$((`cat ${WRKDIR}/config.end` - `cat ${WRKDIR}/config.start`)) "s) =="
@@ -78,14 +100,20 @@ config:
 build-world:	config
 	${ECHO_CMD} "== PHASE: Build World =="
 	${ECHO_TIME} > ${WRKDIR}/build-world.start
-	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} buildworld)
+	@for tgt in ${BUILDWORLD_TGTS}; do \
+		echo $${tgt}; \
+		(cd ${.CURDIR} && make $${tgt}); \
+	done
 	${ECHO_TIME} > ${WRKDIR}/build-world.end
-	${ECHO_CMD} "== END PHASE: Build World (" $$((`cat ${WRKDIR}/build-word.end` - `cat ${WRKDIR}/build-world.start`)) "s) =="
+	${ECHO_CMD} "== END PHASE: Build World (" $$((`cat ${WRKDIR}/build-world.end` - `cat ${WRKDIR}/build-world.start`)) "s) =="
 
 build-kernel:	config
 	${ECHO_CMD} "== PHASE: Build Kernel =="
 	${ECHO_TIME} > ${WRKDIR}/build-kernel.start
-	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} buildkernel)
+	@for tgt in ${BUILDKERNEL_TGTS}; do \
+		echo $${tgt}; \
+		(cd ${.CURDIR} && make $${tgt}); \
+	done
 	${ECHO_TIME} > ${WRKDIR}/build-kernel.end
 	${ECHO_CMD} "== END PHASE: Build Kernel (" $$((`cat ${WRKDIR}/build-kernel.end` - `cat ${WRKDIR}/build-kernel.start`)) "s) =="
 
@@ -94,7 +122,11 @@ build:		tag config build-world build-kernel
 packages:	build
 	${ECHO_CMD} "== PHASE: Install Packages =="
 	${ECHO_TIME} > ${WRKDIR}/packages.start
-	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} packages)
+	@for tgt in ${PACKAGE_TGTS}; do \
+		echo $${tgt}; \
+		(cd ${.CURDIR} && make $${tgt}); \
+	done
+
 	@if [ ! -d ${PKGTOP} ]; then \
 		${MKDIR} ${PKGTOP}; \
 	fi;
