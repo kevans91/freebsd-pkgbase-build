@@ -23,13 +23,14 @@ BUILDTAG?=		${ARCH}
 MAKE_JOBS_NUMBER?=	${NUMCPU}
 
 TAGDATE!=		date +'%Y%m%d-%H%M%S'
-TAGNAME=		"build/${BUILDTAG}/${TAGDATE}"
 
 ARCH_DIRS!=		find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!!g' -e 's!${CONFTOP}!!g'
 
 CONFPATTERN=${CONFPREFIX}(.+)
 .for _arch in ${ARCH_DIRS}
 BUILDARCH+=		${_arch}
+BUILDTAG_${_arch}=	${_arch:C/.+\.//}
+TAG_CMDS+=		"git tag build/${BUILDTAG_${_arch}}/${TAGDATE}"
 ARCHTOP_${_arch}=	${CONFTOP}/${_arch}
 
 .if ${IGNOREEXPR} != ""
@@ -57,7 +58,9 @@ MAKE_ARGS+=		-j${MAKE_JOBS_NUMBER}
 
 tag:
 	@if [ "${NOTAG}" == "" ]; then \
-		(cd ${SRCTOP} && git tag "${TAGNAME}") \
+		for _tagcmd in ${TAG_CMDS}; do \
+			(cd ${SRCTOP} && $${_tagcmd}); \
+		done; \
 	fi
 
 config:
