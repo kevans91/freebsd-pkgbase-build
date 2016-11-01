@@ -1,50 +1,50 @@
 # pkgbase Build Script
 
-PREFIX?=/usr/local
-OBJTOP?=/usr/obj
-SRCTOP?=/usr/src
-PKGTOP?=${PREFIX}/pkgbase
-CONFTOP?=${.CURDIR}/files
-WRKDIR?=${.CURDIR}/work
-MAKE_ARGS+=NO_INSTALLEXTRAKERNELS=no
-KERNCONF?=GENERIC
+PREFIX?=	/usr/local
+OBJTOP?=	/usr/obj
+SRCTOP?=	/usr/src
+PKGTOP?=	${PREFIX}/pkgbase
+CONFTOP?=	${.CURDIR}/files
+WRKDIR?=	${.CURDIR}/work
+MAKE_ARGS+=	NO_INSTALLEXTRAKERNELS=no
+KERNCONF?=	GENERIC
 
 # Only pull files from ${CONFTOP} with this prefix
-CONFPREFIX?=conf-
+CONFPREFIX?=	conf-
 IGNOREEXPR?=
 
-MACHINE!=hostname | cut -d"." -f"1"
-ARCH!=uname -p
-NUMCPU!=sysctl -n hw.ncpu
+MACHINE!=	hostname | cut -d"." -f"1"
+ARCH!=		uname -p
+NUMCPU!=	sysctl -n hw.ncpu
 
-BUILDARCH?=${ARCH}
-BUILDTAG?=${ARCH}
-MAKE_JOBS_NUMBER?=${NUMCPU}
+BUILDARCH?=			${ARCH}
+BUILDTAG?=			${ARCH}
+MAKE_JOBS_NUMBER?=	${NUMCPU}
 
-TAGDATE!=date +'%Y%m%d-%H%M%S'
-TAGNAME="build/${BUILDTAG}/${TAGDATE}"
+TAGDATE!=		date +'%Y%m%d-%H%M%S'
+TAGNAME=		"build/${BUILDTAG}/${TAGDATE}"
 
 CONFPATTERN=${CONFPREFIX}(.+)
 .if ${IGNOREEXPR} != ""
-CONFIGFILES!=find -E ${CONFTOP} -regex "${CONFTOP}/${CONFPATTERN}" ! -regex ${IGNOREEXPR}
+CONFIGFILES!=	find -E ${CONFTOP} -regex "${CONFTOP}/${CONFPATTERN}" ! -regex ${IGNOREEXPR}
 .else
-CONFIGFILES!=find -E ${CONFTOP} -regex "${CONFTOP}/${CONFPATTERN}"
+CONFIGFILES!=	find -E ${CONFTOP} -regex "${CONFTOP}/${CONFPATTERN}"
 .endif
-CONFIGS=${CONFIGFILES:C/${CONFTOP}\///:C/${CONFPATTERN}/\1/}
-CONFDEST=${SRCTOP}/sys/${BUILDARCH}/conf
 
-LN=ln
-FIND=find
-MKDIR=mkdir -p
-SETENV=env
-ECHO_CMD=@echo
-RM=rm -f
-ECHO_TIME=${ECHO_CMD} `date +"%s"`
-WRKDIR_MAKE=[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
+CONFIGS=		${CONFIGFILES:C/${CONFTOP}\///:C/${CONFPATTERN}/\1/}
+CONFDEST=		${SRCTOP}/sys/${BUILDARCH}/conf
 
-KERNCONF+=${CONFIGS}
-MAKE_ARGS+=KERNCONF="${KERNCONF:C/^\w*(.*)/\\1/}"
-MAKE_ARGS+=-j${MAKE_JOBS_NUMBER}
+LN=				ln
+FIND=			find
+MKDIR=			mkdir -p
+SETENV=			env
+ECHO_CMD=		@echo
+ECHO_TIME=		${ECHO_CMD} `date +"%s"`
+WRKDIR_MAKE=	[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
+
+KERNCONF+=		${CONFIGS}
+MAKE_ARGS+=		KERNCONF="${KERNCONF:C/^\w*(.*)/\\1/}"
+MAKE_ARGS+=		-j${MAKE_JOBS_NUMBER}
 
 tag:
 	@if [ "${NOTAG}" == "" ]; then \
