@@ -17,22 +17,31 @@ MACHINE!=	hostname | cut -d"." -f"1"
 ARCH!=		uname -p
 NUMCPU!=	sysctl -n hw.ncpu
 
-BUILDARCH?=			${ARCH}
-BUILDTAG?=			${ARCH}
+#BUILDARCH?=		${ARCH}
+BUILDARCH=		#
+BUILDTAG?=		${ARCH}
 MAKE_JOBS_NUMBER?=	${NUMCPU}
 
 TAGDATE!=		date +'%Y%m%d-%H%M%S'
 TAGNAME=		"build/${BUILDTAG}/${TAGDATE}"
 
+ARCH_DIRS!=		find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!!g' -e 's!${CONFTOP}!!g'
+
 CONFPATTERN=${CONFPREFIX}(.+)
+.for _arch in ${ARCH_DIRS}
+BUILDARCH+=		${_arch}
+ARCHTOP_${_arch}=	${CONFTOP}/${_arch}
+
 .if ${IGNOREEXPR} != ""
-CONFIGFILES!=	find -E ${CONFTOP} -regex "${CONFTOP}/${CONFPATTERN}" ! -regex ${IGNOREEXPR}
+CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/${CONFPATTERN}" ! -regex ${IGNOREEXPR}
 .else
-CONFIGFILES!=	find -E ${CONFTOP} -regex "${CONFTOP}/${CONFPATTERN}"
+CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/${CONFPATTERN}"
 .endif
 
-CONFIGS=		${CONFIGFILES:C/${CONFTOP}\///:C/${CONFPATTERN}/\1/}
-CONFDEST=		${SRCTOP}/sys/${BUILDARCH}/conf
+CONFIGS_${_arch}=	${CONFIGFILES_${_arch}:C/${ARCHTOP_${_arch}}\///:C/${CONFPATTERN}/\1/}
+CONFDEST_${_arch}=	${SRCTOP}/sys/${_arch:C/\..+//}/conf
+.endfor
+
 
 LN=				ln
 FIND=			find
