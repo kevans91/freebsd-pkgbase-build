@@ -21,6 +21,7 @@ NUMCPU!=	sysctl -n hw.ncpu
 BUILDARCH=		#
 BUILDTAG?=		${ARCH}
 MAKE_JOBS_NUMBER?=	${NUMCPU}
+MAKE_ARGS+=		-j${MAKE_JOBS_NUMBER}
 
 TAGDATE!=		date +'%Y%m%d-%H%M%S'
 
@@ -29,7 +30,9 @@ ARCH_DIRS!=		find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!
 CONFPATTERN=${CONFPREFIX}(.+)
 .for _arch in ${ARCH_DIRS}
 BUILDARCH+=		${_arch}
-BUILDTAG_${_arch}=	${_arch:C/.+\.//}
+TARGET_${_arch}=	${_arch:C/\..+//}
+TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
+BUILDTAG_${_arch}=	${TARGET_ARCH_${_arch}}
 TAG_CMDS+=		"git tag build/${BUILDTAG_${_arch}}/${TAGDATE}"
 ARCHTOP_${_arch}=	${CONFTOP}/${_arch}
 
@@ -40,7 +43,8 @@ CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/$
 .endif
 
 CONFIGS_${_arch}=	${CONFIGFILES_${_arch}:C/${ARCHTOP_${_arch}}\///:C/${CONFPATTERN}/\1/}
-CONFDEST_${_arch}=	${SRCTOP}/sys/${_arch:C/\..+//}/conf
+CONFDEST_${_arch}=	${SRCTOP}/sys/${TARGET_${_arch}}/conf
+MAKE_ARGS_${_arch}+=	${MAKE_ARGS} TARGET=${TARGET_${_arch}} TARGET_ARCH=${TARGET_ARCH_${_arch}} KERNCONF="${CONFIGS_${_arch}:C/^\w*(.*)/\\1/}"
 .endfor
 
 
@@ -51,10 +55,6 @@ SETENV=			env
 ECHO_CMD=		@echo
 ECHO_TIME=		${ECHO_CMD} `date +"%s"`
 WRKDIR_MAKE=	[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
-
-KERNCONF+=		${CONFIGS}
-MAKE_ARGS+=		KERNCONF="${KERNCONF:C/^\w*(.*)/\\1/}"
-MAKE_ARGS+=		-j${MAKE_JOBS_NUMBER}
 
 tag:
 	@if [ "${NOTAG}" == "" ]; then \
