@@ -38,6 +38,7 @@ FIND=find
 MKDIR=mkdir -p
 SETENV=env
 ECHO_CMD=@echo
+RM=rm -f
 ECHO_TIME=${ECHO_CMD} `date +"%s"`
 WRKDIR_MAKE=[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
 
@@ -92,3 +93,6 @@ packages:	build
 
 	${ECHO_TIME} > ${WRKDIR}/packages.end
 	${ECHO_CMD} "== END PHASE: Install Packages (" $$((`cat ${WRKDIR}/packages.end` - `cat ${WRKDIR}/packages.start`)) "s) =="
+
+clean:
+	${RM} -r ${WRKDIR}
