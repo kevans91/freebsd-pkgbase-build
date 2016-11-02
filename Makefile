@@ -32,6 +32,7 @@ LN=				ln
 FIND=			find
 MKDIR=			mkdir -p
 RM=			rm -f
+CHFLAGS=		chflags -R
 SETENV=			env
 ECHO_CMD=		@echo
 ECHO_TIME=		${ECHO_CMD} `date +"%s"`
@@ -78,11 +79,18 @@ build-kernel-${_arch}:
 packages-${_arch}:
 	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make MAKEOBJDIRPREFIX=${OBJDIRPREFIX_${_arch}} packages)
 
+clean-${_arch}:
+	if [ -e ${OBJDIRPREFIX_${_arch}} ]; then \
+		${CHFLAGS} noschg ${OBJDIRPREFIX_${_arch}}; \
+		${RM} -r ${OBJDIPREFIX_${_arch}}; \
+	fi;
+
 TAG_TGTS+=		tag-${_arch}
 CONFIG_TGTS+=		config-${_arch}
 BUILDWORLD_TGTS+=	build-world-${_arch}
 BUILDKERNEL_TGTS+=	build-kernel-${_arch}
 PACKAGE_TGTS+=		packages-${_arch}
+CLEAN_TGTS+=		clean-${_arch}
 .endfor
 
 tag:	${TAG_TGTS}
@@ -141,3 +149,13 @@ packages:	build
 
 clean:
 	${RM} -r ${WRKDIR}
+
+cleanall:
+	@for tgt in ${CLEAN_TGTS}; do \
+		echo $${tgt}; \
+		(cd ${.CURDIR} && make $${tgt}); \
+	done
+
+	(cd ${SRCTOP} && \
+		${SETENV} ${MAKE_ENV} make cleandir && \
+		${SETENV} ${MAKE_ENV} make cleandir)
