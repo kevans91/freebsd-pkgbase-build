@@ -1,7 +1,7 @@
 # pkgbase Build Script
 
 PREFIX?=	/usr/local
-OBJTOP?=	/usr/obj
+OBJTOP?=	/usr/obj/pkgbase
 SRCTOP?=	/usr/src
 PKGTOP?=	${PREFIX}/pkgbase
 CONFTOP?=	${.CURDIR}/files
@@ -22,7 +22,7 @@ NUMCPU!=	sysctl -n hw.ncpu
 BUILDARCH=		#
 BUILDTAG?=		${ARCH}
 MAKE_JOBS_NUMBER?=	${NUMCPU}
-MAKE_ARGS+=		-j${MAKE_JOBS_NUMBER}
+#MAKE_ARGS+=		-j${MAKE_JOBS_NUMBER}
 
 TAGDATE!=		date +'%Y%m%d-%H%M%S'
 
@@ -31,6 +31,7 @@ ARCH_DIRS!=		find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!
 LN=				ln
 FIND=			find
 MKDIR=			mkdir -p
+RM=			rm -f
 SETENV=			env
 ECHO_CMD=		@echo
 ECHO_TIME=		${ECHO_CMD} `date +"%s"`
