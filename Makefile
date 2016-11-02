@@ -82,7 +82,7 @@ packages-${_arch}:
 clean-${_arch}:
 	if [ -e ${OBJDIRPREFIX_${_arch}} ]; then \
 		${CHFLAGS} noschg ${OBJDIRPREFIX_${_arch}}; \
-		${RM} -r ${OBJDIPREFIX_${_arch}}; \
+		${RM} -r ${OBJDIRPREFIX_${_arch}}; \
 	fi;
 
 TAG_TGTS+=		tag-${_arch}
