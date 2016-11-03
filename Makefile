@@ -157,5 +157,5 @@ cleanall:
 	done
 
 	(cd ${SRCTOP} && \
-		${SETENV} ${MAKE_ENV} make cleandir && \
-		${SETENV} ${MAKE_ENV} make cleandir)
+		${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} cleandir && \
+		${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} cleandir)
