@@ -75,7 +75,7 @@ tag-${_arch}:
 	fi
 
 config-${_arch}:
-	for _cfgfile in `${FIND} "${CONFDEST_${_arch}}/" -lname "${CONFTOP}/*"`; do \
+	@for _cfgfile in `${FIND} "${CONFDEST_${_arch}}/" -lname "${CONFTOP}/*"`; do \
 		if [ ! -e "$${_cfgfile}" ]; then \
 			${RM} "$${_cfgfile}"; \
 		fi; \
