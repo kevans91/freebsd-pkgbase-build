@@ -3,7 +3,7 @@
 .sinclude "${.CURDIR}/Makefile.local"
 
 PREFIX?=	/usr/local
-OBJTOP?=	/usr/obj/pkgbase
+OBJTOP?=	/usr/obj
 SRCTOP?=	/usr/src
 PKGTOP?=	${PREFIX}/pkgbase
 CONFTOP?=	${.CURDIR}/files
@@ -46,7 +46,6 @@ BUILDARCH+=		${_arch}
 TARGET_${_arch}=	${_arch:C/\..+//}
 TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
 BUILDTAG_${_arch}=	${TARGET_ARCH_${_arch}}
-OBJDIRPREFIX_${_arch}=	${OBJTOP}/${_arch}
 ARCHTOP_${_arch}=	${CONFTOP}/${_arch}
 
 .if ${IGNOREEXPR} != ""
@@ -61,6 +60,9 @@ MAKE_ARGS_${_arch}+=	${MAKE_ARGS} KERNCONF="${CONFIGS_${_arch}:C/^\w*(.*)/\\1/}"
 
 .if ${MACHINE} != ${TARGET_${_arch}} && ${MACHINE_ARCH} != ${TARGET_ARCH_${_arch}}
 MAKE_ARGS_${_arch}+=	TARGET=${TARGET_${_arch}} TARGET_ARCH=${TARGET_ARCH_${_arch}}
+OBJDIRPREFIX_${_arch}=	${OBJTOP}/${_arch}
+.else
+OBJDIRPREFIX_${_arch}=	${OBJTOP}
 .endif
 
 tag-${_arch}:
