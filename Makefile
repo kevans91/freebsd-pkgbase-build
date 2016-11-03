@@ -16,12 +16,13 @@ IGNOREEXPR?=
 
 ARCH!=		uname -p
 NUMCPU!=	sysctl -n hw.ncpu
+NUMTHREADS!=	echo $$(( ${NUMCPU} + ${NUMCPU} ))
 
 #BUILDARCH?=		${ARCH}
 BUILDARCH=		#
 BUILDTAG?=		${ARCH}
-MAKE_JOBS_NUMBER?=	${NUMCPU}
-#MAKE_ARGS+=		-j${MAKE_JOBS_NUMBER}
+MAKE_JOBS_NUMBER?=	${NUMTHREADS}
+MAKE_ARGS+=		-j${MAKE_JOBS_NUMBER}
 
 TAGDATE!=		date +'%Y%m%d-%H%M%S'
 
