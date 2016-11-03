@@ -49,7 +49,6 @@ TARGET_${_arch}=	${_arch:C/\..+//}
 TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
 BUILDTAG_${_arch}=	${TARGET_ARCH_${_arch}}
 OBJDIRPREFIX_${_arch}=	${OBJTOP}/${_arch}
-TAG_CMDS+=		"git tag build/${BUILDTAG_${_arch}}/${TAGDATE}"
 ARCHTOP_${_arch}=	${CONFTOP}/${_arch}
 
 .if ${IGNOREEXPR} != ""
