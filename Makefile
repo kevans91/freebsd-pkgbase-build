@@ -14,7 +14,6 @@ KERNCONF?=	GENERIC
 CONFPREFIX?=	conf-
 IGNOREEXPR?=
 
-MACHINE!=	hostname | cut -d"." -f"1"
 ARCH!=		uname -p
 NUMCPU!=	sysctl -n hw.ncpu
 
