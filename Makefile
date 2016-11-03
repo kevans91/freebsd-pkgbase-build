@@ -161,12 +161,12 @@ packages:	build
 
 		# Make sure the repo dir exists
 	@if [ ! -d ${PKGTOP}/repo ]; then \
-		${MKDIR} ${PKGTOP}/repo
+		${MKDIR} ${PKGTOP}/repo; \
 	fi;
 
 		# Symlink in the different ABI repositories
-	@for repodir in ${ALL_REPOS}; do \
-		for abidir in ${FIND} $${repodir} -type d -d 1; do \
+	for repodir in ${ALL_REPOS}; do \
+		for abidir in `${FIND} $${repodir} -type d -d 1`; do \
 			if [ ! -e ${PKGTOP}/repo/`basename $${abidir}` ]; then \
 				${LN} -s $${abidir} ${PKGTOP}/repo; \
 			fi; \
