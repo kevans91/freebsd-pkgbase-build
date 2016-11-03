@@ -5,7 +5,7 @@ This is my Makefile for assembling pkgbase packages for my five other machines. 
 Currently,  the steps to get a build going are as follows:
 
 1. Ensure you have a copy of the src tree at /usr/src (configurable: see `SRCTOP` in the "Configurables" section). This is assumed to be a git working directory for the purposes of tagging when a build is made.
-2. Place the kernel configurations that you would like to build in the files/ directory. By default, kernel configurations use a 'conf-' prefix to distinguish them from any notes or miscellaneous scripts you may want to throw in there. For every configuration, conf-$CONFNAME, in the files/ directory, this makefile will create a symlink @ src/sys/$ARCH/conf/$CONFNAME -> files/conf-$CONFNAME.
+2. Place the kernel configuration(s) that you would like to build in a ${CONFTOP}/${TARGET}.${TARGET_ARCH} (common examples: `arm.armv6`, `amd64.amd64) directory. By default, kernel configurations use a 'conf-' prefix to distinguish them from any notes or miscellaneous scripts you may want to throw in there. For every configuration, conf-$CONFNAME, in the files/ directory, this makefile will create a symlink @ src/sys/$ARCH/conf/$CONFNAME -> files/conf-$CONFNAME.
 3. ??
 4. Profit, or `make packages`. `make packages` will run the buildworld, buildkernel, and packages targets from the source tree. Additionally, it will put a symlink to the pkgbase repo @ $PREFIX/pkgbase/repo (also configurable: see `PKGTOP` in the "Configurables" section)
 
@@ -25,3 +25,4 @@ All of these names are subject to change in the future, because they seem like a
 * `CONFPREFIX`: (Default: `conf-`) Prefix to be used for configuration files in $CONFTOP -- this prefix will be stripped from the files when symlinks are created in src/sys/$ARCH/conf
 * `IGNOREEXPR`: (Default: none) Regex to use in discarding some config files from the build
 * `NOTAG`: (Default: none) If set to anything other than "", don't attempt to `git tag` this build
+* `BUILDARCHS`: (Default: all in `$CONFTOP`) Architectures to build/package for
