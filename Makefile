@@ -82,7 +82,7 @@ build-kernel-${_arch}:
 	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildkernel)
 
 packages-${_arch}:
-	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make MAKEOBJDIRPREFIX=${OBJDIRPREFIX_${_arch}} packages)
+	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} packages)
 
 clean-${_arch}:
 	if [ -e ${OBJDIRPREFIX_${_arch}} ]; then \
