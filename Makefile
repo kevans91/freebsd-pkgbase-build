@@ -16,21 +16,18 @@ KERNCONF?=	GENERIC
 CONFPREFIX?=	conf-
 IGNOREEXPR?=
 
-ARCH!=		uname -p
+ARCH_DIRS!=	find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!!g' -e 's!${CONFTOP}!!g'
+
 MACHINE!=	make -C ${SRCTOP} -V MACHINE
 MACHINE_ARCH!=	make -C ${SRCTOP} -V MACHINE_ARCH
 NUMCPU!=	sysctl -n hw.ncpu
 NUMTHREADS!=	echo $$(( ${NUMCPU} + ${NUMCPU} ))
 
-#BUILDARCH?=		${ARCH}
-BUILDARCH=		#
-BUILDTAG?=		${ARCH}
+BUILDARCHS?=		${ARCH_DIRS}
 MAKE_JOBS_NUMBER?=	${NUMTHREADS}
 MAKE_ARGS+=		-j${MAKE_JOBS_NUMBER}
 
 TAGDATE!=		date +'%Y%m%d-%H%M%S'
-
-ARCH_DIRS!=		find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!!g' -e 's!${CONFTOP}!!g'
 
 LN=				ln
 FIND=			find
@@ -44,6 +41,7 @@ WRKDIR_MAKE=	[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
 CONFPATTERN=${CONFPREFIX}(.+)
 
 .for _arch in ${ARCH_DIRS}
+.if ${BUILDARCHS:M${_arch}}
 BUILDARCH+=		${_arch}
 TARGET_${_arch}=	${_arch:C/\..+//}
 TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
@@ -98,6 +96,7 @@ BUILDWORLD_TGTS+=	build-world-${_arch}
 BUILDKERNEL_TGTS+=	build-kernel-${_arch}
 PACKAGE_TGTS+=		packages-${_arch}
 CLEAN_TGTS+=		clean-${_arch}
+.endif
 .endfor
 
 tag:	${TAG_TGTS}
