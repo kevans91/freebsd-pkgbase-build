@@ -29,8 +29,9 @@ MAKE_ARGS+=		-j${MAKE_JOBS_NUMBER}
 
 TAGDATE!=		date +'%Y%m%d-%H%M%S'
 
-LN=				ln
+LN=			ln
 FIND=			find
+DIFF=			diff -q
 MKDIR=			mkdir -p
 RM=			rm -f
 CHFLAGS=		chflags -R
@@ -38,6 +39,8 @@ SETENV=			env
 ECHO_CMD=		@echo
 ECHO_TIME=		${ECHO_CMD} `date +"%s"`
 WRKDIR_MAKE=	[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
+
+
 CONFPATTERN=${CONFPREFIX}(.+)
 
 .for _arch in ${ARCH_DIRS}
@@ -72,6 +75,12 @@ tag-${_arch}:
 
 config-${_arch}:
 	@for _cfg in ${CONFIGS_${_arch}}; do \
+		if [ ! -e "${CONFDEST_${_arch}}/$${_cfg}" ]; then \
+			${DIFF} "${CONFDEST_${_arch}}/$${_cfg}" "${ARCHTOP_${_arch}}/${CONFPREFIX}$${_cfg}"; \
+			if [ $? -ne 0 ]; then \
+				${RM} "${CONFDEST_${_arch}}/$${_cfg}"; \
+			fi; \
+		fi; \
 		if [ ! -e "${CONFDEST_${_arch}}/$${_cfg}" ]; then \
 			${LN} -s "${ARCHTOP_${_arch}}/${CONFPREFIX}$${_cfg}" "${CONFDEST_${_arch}}/$${_cfg}"; \
 		fi; \
