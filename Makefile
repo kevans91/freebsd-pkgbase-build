@@ -38,8 +38,9 @@ CHFLAGS=		chflags -R
 SETENV=			env
 ECHO_CMD=		@echo
 ECHO_TIME=		${ECHO_CMD} `date +"%s"`
-WRKDIR_MAKE=	[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
+WRKDIR_MAKE=		[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
 
+ALL_REPOS+=		${OBJTOP}${SRCTOP}/repo
 
 CONFPATTERN=${CONFPREFIX}(.+)
 
@@ -112,8 +113,6 @@ BUILDWORLD_TGTS+=	build-world-${_arch}
 BUILDKERNEL_TGTS+=	build-kernel-${_arch}
 PACKAGE_TGTS+=		packages-${_arch}
 CLEAN_TGTS+=		clean-${_arch}
-
-ALL_REPOS+=		${OBJDIRPREFIX_${_arch}}/${SRCTOP}/repo
 .endif
 .endfor
 
