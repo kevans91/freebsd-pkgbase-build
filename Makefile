@@ -15,6 +15,8 @@ CONFPREFIX?=	conf-
 IGNOREEXPR?=
 
 ARCH!=		uname -p
+MACHINE!=	make -C ${SRCTOP} -V MACHINE
+MACHINE_ARCH!=	make -C ${SRCTOP} -V MACHINE_ARCH
 NUMCPU!=	sysctl -n hw.ncpu
 NUMTHREADS!=	echo $$(( ${NUMCPU} + ${NUMCPU} ))
 
@@ -56,7 +58,11 @@ CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/$
 
 CONFIGS_${_arch}=	${CONFIGFILES_${_arch}:C/${ARCHTOP_${_arch}}\///:C/${CONFPATTERN}/\1/}
 CONFDEST_${_arch}=	${SRCTOP}/sys/${TARGET_${_arch}}/conf
-MAKE_ARGS_${_arch}+=	${MAKE_ARGS} MAKEOBJDIRPREFIX=${OBJDIRPREFIX_${_arch}} TARGET=${TARGET_${_arch}} TARGET_ARCH=${TARGET_ARCH_${_arch}} KERNCONF="${CONFIGS_${_arch}:C/^\w*(.*)/\\1/}"
+MAKE_ARGS_${_arch}+=	${MAKE_ARGS} KERNCONF="${CONFIGS_${_arch}:C/^\w*(.*)/\\1/}"
+
+.if ${MACHINE} != ${TARGET_${_arch}} && ${MACHINE_ARCH} != ${TARGET_ARCH_${_arch}}
+MAKE_ARGS_${_arch}+=	TARGET=${TARGET_${_arch}} TARGET_ARCH=${TARGET_ARCH_${_arch}}
+.endif
 
 tag-${_arch}:
 	@if [ "${NOTAG}" == "" ]; then \
