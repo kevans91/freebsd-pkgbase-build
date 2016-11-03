@@ -1,5 +1,7 @@
 # pkgbase Build Script
 
+.sinclude "${.CURDIR}/Makefile.local"
+
 PREFIX?=	/usr/local
 OBJTOP?=	/usr/obj/pkgbase
 SRCTOP?=	/usr/src
