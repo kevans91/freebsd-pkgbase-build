@@ -13,7 +13,7 @@ Currently,  the steps to get a build going are as follows:
 Cross-architecture building. Right now, it will only build targets on the same architecture as the host. This could be expanded later to separate the configs out by architecture, but for the time being that is out of the scope of this project. Mostly because other projects, such as crochet and freebsd-wifi-build, do these things better for a lot of use cases.
 
 # Configurables
-All of these names are subject to change in the future, because they seem like a poor choice the more I think about it. These are all configurable either in `/etc/make.conf` or as environment variables.
+All of these names are subject to change in the future, because they seem like a poor choice the more I think about it. These are all configurable either in `/etc/make.conf`, a `Makefile.local` in this directory, or as environment variables.
 
 * `PREFIX`: (Default: `/usr/local`) Same as $PREFIX elsewhere
 * `OBJTOP`: (Default: `/usr/obj`) Where build output goes -- this would correspond to MAKEOBJDIRPREFIX

@@ -69,11 +69,21 @@ OBJDIRPREFIX_${_arch}=	${OBJTOP}/${_arch}
 OBJDIRPREFIX_${_arch}=	${OBJTOP}
 .endif
 
+	# XXX kevans91: DO NOT ADD SOURCE TARGETS FOR ANY OF THESE ARCH-SPECIFIC
+	# TARGETS! make(1) is re-invoked to execute each of these targets,
+	# adding sources can and will cause bad things to happen. I can probably
+	# find a better way to manage this, but for the time being -- I don't really
+	# care to.
+
+	# Tag the repository for this arch, unless we're not tagging
 tag-${_arch}:
 	@if [ "${NOTAG}" == "" ]; then \
 		(cd ${SRCTOP} && git tag "build/${BUILDTAG_${_arch}}/${TAGDATE}"); \
 	fi
 
+	# Clean up any kernel configs that have disappeared. Ensure that we have
+	# symlinks for all of the configurations we're using. If there's a difference,
+	# remove the in-tree kernconf and re-symlink it Otherwise, leave it be.
 config-${_arch}:
 	@for _cfgfile in `${FIND} "${CONFDEST_${_arch}}/" -lname "${CONFTOP}/*"`; do \
 		if [ ! -e "$${_cfgfile}" ]; then \
@@ -92,15 +102,22 @@ config-${_arch}:
 		fi; \
 	done;
 
+	# Build world for this architecture
 build-world-${_arch}:
 	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildworld)
 
+	# Build kernel for this architecture
 build-kernel-${_arch}:
 	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildkernel)
 
+	# Build packages for this architecture
+	# This is needed because the actual OBJDIR is based on TARGET/TARGET_ARCH
 packages-${_arch}:
 	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} packages)
 
+	# Clean up architecture-specific stuff
+	# To be clear, this is really ony OBJDIR materials
+	# src stuff gets cleaned up inthe 'cleanall' target
 clean-${_arch}:
 	if [ -e ${OBJDIRPREFIX_${_arch}} ]; then \
 		${CHFLAGS} noschg ${OBJDIRPREFIX_${_arch}}; \
@@ -118,6 +135,9 @@ CLEAN_TGTS+=		clean-${_arch}
 
 tag:	${TAG_TGTS}
 
+	# From here out, the targets are all of a pretty straightforward recipe:
+	# * A loop to run make(1) for all of the architecture-specific targets
+	# * A wrapper to do profiling for each target's full run
 config:
 	${WRKDIR_MAKE}
 	${ECHO_CMD} "== PHASE: Install Config =="
@@ -151,6 +171,13 @@ build-kernel:	config
 
 build:		tag config build-world build-kernel
 
+	# Packages is the exception. This one has to do some extra
+	# work after the packages are all built, because our build
+	# system actually generates multiple repos based on the
+	# TARGET/TARGET_ARCH
+	# This leads to us needing an overarching pkgbase repo that
+	# actually symlinks individual ABI directories into it, to
+	# easily support multiarch pkgbase builds
 packages:	build
 	${ECHO_CMD} "== PHASE: Install Packages =="
 	${ECHO_TIME} > ${WRKDIR}/packages.start
@@ -176,9 +203,12 @@ packages:	build
 	${ECHO_TIME} > ${WRKDIR}/packages.end
 	${ECHO_CMD} "== END PHASE: Install Packages (" $$((`cat ${WRKDIR}/packages.end` - `cat ${WRKDIR}/packages.start`)) "s) =="
 
+	# This is really a target for cleaning 'local' things
 clean:
 	${RM} -r ${WRKDIR}
 
+	# This is for a thorough leaning of all of the different OBJDIRS
+	# as well as the src tree itself.
 cleanall:
 	@for tgt in ${CLEAN_TGTS}; do \
 		echo $${tgt}; \
