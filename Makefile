@@ -146,13 +146,19 @@ packages:	build
 		(cd ${.CURDIR} && make $${tgt}); \
 	done
 
-	@if [ ! -d ${PKGTOP} ]; then \
-		${MKDIR} ${PKGTOP}; \
+		# Make sure the repo dir exists
+	@if [ ! -d ${PKGTOP}/repo ]; then \
+		${MKDIR} ${PKGTOP}/repo
 	fi;
 
-	@if [ ! -e ${PKGTOP}/repo ]; then \
-		${LN} -s ${OBJTOP}/${SRCTOP}/repo ${PKGTOP}/repo; \
-	fi;
+		# Symlink in the different ABI repositories
+	@for repodir in ${ALL_REPOS}; do \
+		for abidir in ${FIND} $${repodir} -type d -d 1; do \
+			if [ ! -e ${PKGTOP}/repo/`basename $${abidir}` ]; then \
+				${LN} -s $${abidir} ${PKGTOP}/repo; \
+			fi; \
+		done; \
+	done;
 
 	${ECHO_TIME} > ${WRKDIR}/packages.end
 	${ECHO_CMD} "== END PHASE: Install Packages (" $$((`cat ${WRKDIR}/packages.end` - `cat ${WRKDIR}/packages.start`)) "s) =="
