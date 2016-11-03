@@ -74,17 +74,22 @@ tag-${_arch}:
 	fi
 
 config-${_arch}:
+	for _cfgfile in `${FIND} "${CONFDEST_${_arch}}/" -lname "${CONFTOP}/*"`; do \
+		if [ ! -e "$${_cfgfile}" ]; then \
+			${RM} "$${_cfgfile}"; \
+		fi; \
+	done;
 	@for _cfg in ${CONFIGS_${_arch}}; do \
-		if [ ! -e "${CONFDEST_${_arch}}/$${_cfg}" ]; then \
+		if [ -e "${CONFDEST_${_arch}}/$${_cfg}" ]; then \
 			${DIFF} "${CONFDEST_${_arch}}/$${_cfg}" "${ARCHTOP_${_arch}}/${CONFPREFIX}$${_cfg}"; \
-			if [ $? -ne 0 ]; then \
+			if [ $$? -ne 0 ]; then \
 				${RM} "${CONFDEST_${_arch}}/$${_cfg}"; \
 			fi; \
 		fi; \
 		if [ ! -e "${CONFDEST_${_arch}}/$${_cfg}" ]; then \
 			${LN} -s "${ARCHTOP_${_arch}}/${CONFPREFIX}$${_cfg}" "${CONFDEST_${_arch}}/$${_cfg}"; \
 		fi; \
-	done
+	done;
 
 build-world-${_arch}:
 	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildworld)
