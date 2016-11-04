@@ -77,7 +77,7 @@ OBJDIRPREFIX_${_arch}=	${OBJTOP}
 
 	# Tag the repository for this arch, unless we're not tagging
 tag-${_arch}:
-	@if [ "${NOTAG}" == "" ]; then \
+	@if [ "${NOTAG}" == "" ] && [ `which git` ]; then \
 		(cd ${SRCTOP} && git tag "build/${BUILDTAG_${_arch}}/${TAGDATE}"); \
 	fi
 
