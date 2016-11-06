@@ -16,6 +16,7 @@ KERNCONF?=	GENERIC
 CONFPREFIX?=	conf-
 IGNOREEXPR?=
 
+ALL_ARCHS!=	cd ${SRCTOP} && make targets | grep -e '^ ' | sed -e 's/    //' -e's|/|.|'
 ARCH_DIRS!=	find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!!g' -e 's!${CONFTOP}!!g'
 
 MACHINE!=	make -C ${SRCTOP} -V MACHINE
@@ -45,7 +46,7 @@ ALL_REPOS+=		${OBJTOP}${SRCTOP}/repo
 CONFPATTERN=${CONFPREFIX}(.+)
 
 .for _arch in ${ARCH_DIRS}
-.if ${BUILDARCHS:M${_arch}}
+.if ${ALL_ARCHS:M${_arch}} && ${BUILDARCHS:M${_arch}}
 BUILDARCH+=		${_arch}
 TARGET_${_arch}=	${_arch:C/\..+//}
 TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
