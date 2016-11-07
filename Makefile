@@ -16,11 +16,13 @@ KERNCONF?=	GENERIC
 CONFPREFIX?=	conf-
 IGNOREEXPR?=
 
-ALL_ARCHS!=	cd ${SRCTOP} && make targets | grep -e '^ ' | sed -e 's/    //' -e's|/|.|'
 ARCH_DIRS!=	find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!!g' -e 's!${CONFTOP}!!g'
 
+ALL_ARCHS!=	cd ${SRCTOP} && make targets | grep -e '^ ' | sed -e 's/    //' -e's|/|.|'
 MACHINE!=	make -C ${SRCTOP} -V MACHINE
 MACHINE_ARCH!=	make -C ${SRCTOP} -V MACHINE_ARCH
+ALL_REPOS+=	${OBJTOP}${SRCTOP}/repo
+
 NUMCPU!=	sysctl -n hw.ncpu
 NUMTHREADS!=	echo $$(( ${NUMCPU} + ${NUMCPU} ))
 
@@ -41,8 +43,6 @@ ECHO_CMD=		@echo
 ECHO_TIME=		${ECHO_CMD} `date +"%s"`
 WRKDIR_MAKE=		[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
 
-ALL_REPOS+=		${OBJTOP}${SRCTOP}/repo
-
 CONFPATTERN=${CONFPREFIX}(.+)
 
 .for _arch in ${ARCH_DIRS}
@@ -50,6 +50,7 @@ CONFPATTERN=${CONFPREFIX}(.+)
 BUILDARCH+=		${_arch}
 TARGET_${_arch}=	${_arch:C/\..+//}
 TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
+SRCTOP_${_arch}}=	${SRCTOP}
 BUILDTAG_${_arch}=	${TARGET_ARCH_${_arch}}
 ARCHTOP_${_arch}=	${CONFTOP}/${_arch}
 
@@ -60,7 +61,7 @@ CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/$
 .endif
 
 CONFIGS_${_arch}=	${CONFIGFILES_${_arch}:C/${ARCHTOP_${_arch}}\///:C/${CONFPATTERN}/\1/}
-CONFDEST_${_arch}=	${SRCTOP}/sys/${TARGET_${_arch}}/conf
+CONFDEST_${_arch}=	${SRCTOP_${_arch}}/sys/${TARGET_${_arch}}/conf
 MAKE_ARGS_${_arch}+=	${MAKE_ARGS} KERNCONF="${KERNCONF} ${CONFIGS_${_arch}:C/^\w*(.*)/\\1/}"
 
 .if ${MACHINE} != ${TARGET_${_arch}} && ${MACHINE_ARCH} != ${TARGET_ARCH_${_arch}}
@@ -79,7 +80,7 @@ OBJDIRPREFIX_${_arch}=	${OBJTOP}
 	# Tag the repository for this arch, unless we're not tagging
 tag-${_arch}:
 	@if [ "${NOTAG}" == "" ] && [ `which git` ]; then \
-		(cd ${SRCTOP} && git tag "build/${BUILDTAG_${_arch}}/${TAGDATE}"); \
+		(cd ${SRCTOP_${_arch}} && git tag "build/${BUILDTAG_${_arch}}/${TAGDATE}"); \
 	fi
 
 	# Clean up any kernel configs that have disappeared. Ensure that we have
@@ -105,16 +106,16 @@ config-${_arch}:
 
 	# Build world for this architecture
 build-world-${_arch}:
-	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildworld)
+	@(cd ${SRCTOP_${_arch}} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildworld)
 
 	# Build kernel for this architecture
 build-kernel-${_arch}:
-	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildkernel)
+	@(cd ${SRCTOP_${_arch}} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildkernel)
 
 	# Build packages for this architecture
 	# This is needed because the actual OBJDIR is based on TARGET/TARGET_ARCH
 packages-${_arch}:
-	@(cd ${SRCTOP} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} packages)
+	@(cd ${SRCTOP_${_arch}} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} packages)
 
 	# Clean up architecture-specific stuff
 	# To be clear, this is really ony OBJDIR materials
