@@ -49,7 +49,7 @@ ${_src}_ALL_ARCHS!=	cd ${_src} && make targets | grep -e '^ ' | sed -e 's/    //
 ${_src}_REVISION!=	make -C ${_src}/release -V REVISION
 ALL_REPOS+=		${OBJTOP}${_src}/repo
 
-.if empty(${${_src}_ARCHS})
+.if !${${_src}_ARCHS}
 ${_src}_ARCHS+=		${ARCH_DIRS}
 .endif
 
@@ -58,10 +58,11 @@ ${_src}_ARCHS+=		${ARCH_DIRS}
 .for _arch in ${${_src}_ARCHS}
 .if ! ${${_src}_ALL_ARCHS:M${_arch}}
 .warning ${_arch} not valid in ${_src} context
+${_src}_ARCHS:=		${${_src}_ARCHS:C/${_arch}//}
 .else
 _srcarch:=		${${_src}_REVISION}${_arch}
 .if ${ALL_SRCARCH:M${_srcarch}}
-.error Multiply defined version/arch combinations for ${_arch}
+.error Multiply defined version/arch combinations for ${_arch} (used: ${ALL_SRCARCH})
 .else
 ALL_SRCARCH:=		${ALL_SRCARCH} ${_srcarch}
 .endif
