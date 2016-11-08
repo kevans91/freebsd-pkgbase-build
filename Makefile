@@ -45,7 +45,7 @@ BUILDARCHS:=		# For later iteration -- all architectures to build
 _src:=			${src:C/\:.*//}
 ALL_SRCTOP+=		${_src}
 ${_src}_ARCHS:=		${src:C/^[^\:]*(\:|\$)//:S/,/ /g}
-${_src}_ALL_ARCHS!=	cd ${_src} && make targets | grep -e '^ ' | sed -e 's/    //' -e's|/|.|'
+${_src}_ALL_ARCHS!=	make -C ${_src} targets | grep -e '^ ' | sed -e 's/    //' -e's|/|.|'
 ${_src}_REVISION!=	make -C ${_src}/release -V REVISION
 ALL_REPOS:=		${ALL_REPOS} ${OBJTOP}${_src}/repo
 
@@ -197,7 +197,7 @@ config:
 	${ECHO_TIME} > ${WRKDIR}/config.start
 	@for tgt in ${CONFIG_TGTS}; do \
 		echo $${tgt}; \
-		(cd ${.CURDIR} && make $${tgt}); \
+		make -C ${.CURDIR} $${tgt}; \
 	done
 	${ECHO_TIME} > ${WRKDIR}/config.end
 	${ECHO_CMD} "== END PHASE: Install Config (" $$((`cat ${WRKDIR}/config.end` - `cat ${WRKDIR}/config.start`)) "s) =="
@@ -207,7 +207,7 @@ build-world:	config
 	${ECHO_TIME} > ${WRKDIR}/build-world.start
 	@for tgt in ${BUILDWORLD_TGTS}; do \
 		echo $${tgt}; \
-		(cd ${.CURDIR} && make $${tgt}); \
+		make -C ${.CURDIR} $${tgt}; \
 	done
 	${ECHO_TIME} > ${WRKDIR}/build-world.end
 	${ECHO_CMD} "== END PHASE: Build World (" $$((`cat ${WRKDIR}/build-world.end` - `cat ${WRKDIR}/build-world.start`)) "s) =="
@@ -217,7 +217,7 @@ build-kernel:	config
 	${ECHO_TIME} > ${WRKDIR}/build-kernel.start
 	@for tgt in ${BUILDKERNEL_TGTS}; do \
 		echo $${tgt}; \
-		(cd ${.CURDIR} && make $${tgt}); \
+		make -C ${.CURDIR} $${tgt}; \
 	done
 	${ECHO_TIME} > ${WRKDIR}/build-kernel.end
 	${ECHO_CMD} "== END PHASE: Build Kernel (" $$((`cat ${WRKDIR}/build-kernel.end` - `cat ${WRKDIR}/build-kernel.start`)) "s) =="
@@ -236,7 +236,7 @@ packages:	build
 	${ECHO_TIME} > ${WRKDIR}/packages.start
 	@for tgt in ${PACKAGE_TGTS}; do \
 		echo $${tgt}; \
-		(cd ${.CURDIR} && make $${tgt}); \
+		make -C ${.CURDIR} $${tgt}; \
 	done
 
 		# Make sure the repo dir exists
