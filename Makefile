@@ -108,9 +108,6 @@ MAKE_ARGS_${_arch}+=	${MAKE_ARGS} KERNCONF="${KERNCONF} ${CONFIGS_${_arch}:C/^\w
 
 .if ${MACHINE} != ${TARGET_${_arch}} && ${MACHINE_ARCH} != ${TARGET_ARCH_${_arch}}
 MAKE_ARGS_${_arch}+=	TARGET=${TARGET_${_arch}} TARGET_ARCH=${TARGET_ARCH_${_arch}}
-OBJDIRPREFIX_${_arch}=	${OBJTOP}/${_arch}
-.else
-OBJDIRPREFIX_${_arch}=	${OBJTOP}
 .endif
 
 	# XXX kevans91: DO NOT ADD SOURCE TARGETS FOR ANY OF THESE ARCH-SPECIFIC
@@ -168,21 +165,12 @@ build-kernel-${_arch}:
 packages-${_arch}:
 	@(cd ${SRCTOP_${_arch}} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} packages)
 
-	# Clean up architecture-specific stuff
-	# To be clear, this is really ony OBJDIR materials
-	# src stuff gets cleaned up inthe 'cleanall' target
-clean-${_arch}:
-	if [ -e ${OBJDIRPREFIX_${_arch}} ]; then \
-		${CHFLAGS} noschg ${OBJDIRPREFIX_${_arch}}; \
-		${RM} -r ${OBJDIRPREFIX_${_arch}}; \
-	fi;
 
 TAG_TGTS+=		tag-${_arch}
 CONFIG_TGTS+=		config-${_arch}
 BUILDWORLD_TGTS+=	build-world-${_arch}
 BUILDKERNEL_TGTS+=	build-kernel-${_arch}
 PACKAGE_TGTS+=		packages-${_arch}
-CLEAN_TGTS+=		clean-${_arch}
 .endif
 .endfor
 
@@ -263,10 +251,6 @@ clean:
 	# This is for a thorough leaning of all of the different OBJDIRS
 	# as well as the src tree itself.
 cleanall:
-	@for tgt in ${CLEAN_TGTS}; do \
-		echo $${tgt}; \
-		(cd ${.CURDIR} && make $${tgt}); \
-	done
 
 	(cd ${SRCTOP} && \
 		${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} cleandir && \
