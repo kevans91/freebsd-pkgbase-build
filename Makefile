@@ -43,7 +43,7 @@ BUILDARCHS:=		# For later iteration -- all architectures to build
 
 .for src in ${SRCTOP}
 _src:=			${src:C/\:.*//}
-ALL_SRCTOP+=		${_src}
+ALL_SRCTOP:=		${ALL_SRCTOP} ${_src}
 ${_src}_ARCHS:=		${src:C/^[^\:]*(\:|\$)//:S/,/ /g}
 ${_src}_ALL_ARCHS!=	make -C ${_src} targets | grep -e '^ ' | sed -e 's/    //' -e's|/|.|'
 ${_src}_REVISION!=	make -C ${_src}/release -V REVISION
@@ -89,7 +89,6 @@ MACHINE_ARCH!=	make -C ${_src} -V MACHINE_ARCH
 BUILDARCH+=		${_arch}
 TARGET_${_arch}=	${_arch:C/\..+//}
 TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
-SRCTOP_${_arch}}=	${SRCTOP}
 BUILDTAG_${_arch}=	${TARGET_ARCH_${_arch}}
 ARCHTOP_${_arch}=	${CONFTOP}/${_arch}
 
@@ -154,17 +153,22 @@ config-${_arch}:
 
 	# Build world for this architecture
 build-world-${_arch}:
-	@(cd ${SRCTOP_${_arch}} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildworld)
+	@for _srctop in ${SRCTOP_${_arch}}; do \
+		${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} buildworld; \
+	done;
 
 	# Build kernel for this architecture
 build-kernel-${_arch}:
-	@(cd ${SRCTOP_${_arch}} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} buildkernel)
+	@for _srctop in ${SRCTOP_${_arch}}; do \
+		${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} buildkernel; \
+	done;
 
 	# Build packages for this architecture
 	# This is needed because the actual OBJDIR is based on TARGET/TARGET_ARCH
 packages-${_arch}:
-	@(cd ${SRCTOP_${_arch}} && ${SETENV} ${MAKE_ENV} make ${MAKE_ARGS_${_arch}} packages)
-
+	@for _srctop in ${SRCTOP_${_arch}}; do \
+		${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} packages; \
+	done
 
 TAG_TGTS+=		tag-${_arch}
 CONFIG_TGTS+=		config-${_arch}
@@ -251,7 +255,15 @@ clean:
 	# This is for a thorough leaning of all of the different OBJDIRS
 	# as well as the src tree itself.
 cleanall:
+	# Clean up architecture-specific stuff
+	# To be clear, this is really ony OBJDIR materials
+	# src stuff gets cleaned up inthe 'cleanall' target
+	if [ -e "${OBJTOP}/" ]; then \
+		${CHFLAGS} noschg "${OBJTOP}/"; \
+		${RM} -r "${OBJTOP}/"; \
+	fi;
 
-	(cd ${SRCTOP} && \
-		${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} cleandir && \
-		${SETENV} ${MAKE_ENV} make ${MAKE_ARGS} cleandir)
+	for _srctop in ${ALL_SRCTOP}; do \
+		${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS} cleandir; \
+		${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS} cleandir; \
+	done;
