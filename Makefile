@@ -49,52 +49,52 @@ ${_src}_ALL_ARCHS!=	make -C ${_src} targets | grep -e '^ ' | sed -e 's/    //' -
 ${_src}_REVISION!=	make -C ${_src}/release -V REVISION
 ALL_REPOS:=		${ALL_REPOS} ${OBJTOP}${_src}/repo
 
-.if !${${_src}_ARCHS}
+.if empty(${_src}_ARCHS)
 ${_src}_ARCHS+=		${ARCH_DIRS}
 .endif
 
 # Validate _ARCHS vs. _ALL_ARCHS and make sure we don't have multiply defined osrel+arch combos
 # The latter would result in ABI collision
 .for _arch in ${${_src}_ARCHS}
-.if ! ${${_src}_ALL_ARCHS:M${_arch}}
+.if empty(${_src}_ALL_ARCHS:M${_arch})
 .if VERBOSE
 .warning ${_arch} not valid in ${_src} context
 .endif
 ${_src}_ARCHS:=		${${_src}_ARCHS:C/${_arch}//}
 .else
 _srcarch:=		${${_src}_REVISION}${_arch}
-.if ${ALL_SRCARCH:M${_srcarch}}
+.if !empty(ALL_SRCARCH:M${_srcarch})
 .error Multiply defined version/arch combinations for ${_arch} (used: ${ALL_SRCARCH})
 .else
 ALL_SRCARCH:=		${ALL_SRCARCH} ${_srcarch}
 SRCTOP_${_arch}:=	${SRCTOP_${_arch}} ${_src}
 
-.if !${BUILDARCHS:M${_arch}}
+.if empty(BUILDARCHS:M${_arch})
 BUILDARCHS:=		${BUILDARCHS} ${_arch}
 .endif
 .endif
 .endif
 .endfor
 
-.if empty(${MACHINE})
+.if empty(MACHINE)
 MACHINE!=	make -C ${_src} -V MACHINE
 .endif
 
-.if empty(${MACHINE_ARCH})
+.if empty(MACHINE_ARCH)
 MACHINE_ARCH!=	make -C ${_src} -V MACHINE_ARCH
 .endif
 .endfor
 
 .for _arch in ${ARCH_DIRS}
 # We now construct BUILDARCHS from SRCTOP information... ugh. It's valid, though
-.if ${BUILDARCHS:M${_arch}}
+.if !empty(BUILDARCHS:M${_arch})
 BUILDARCH+=		${_arch}
 TARGET_${_arch}=	${_arch:C/\..+//}
 TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
 BUILDTAG_${_arch}=	${TARGET_ARCH_${_arch}}
 ARCHTOP_${_arch}=	${CONFTOP}/${_arch}
 
-.if ${IGNOREEXPR} != ""
+.if !empty(IGNOREEXPR)
 CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/${CONFPATTERN}" ! -regex ${IGNOREEXPR}
 .else
 CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/${CONFPATTERN}"
