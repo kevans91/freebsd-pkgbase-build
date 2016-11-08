@@ -17,7 +17,7 @@ All of these names are subject to change in the future, because they seem like a
 
 * `PREFIX`: (Default: `/usr/local`) Same as $PREFIX elsewhere
 * `OBJTOP`: (Default: `/usr/obj`) Where build output goes -- this would correspond to MAKEOBJDIRPREFIX
-* `SRCTOP`: (Default: `/usr/src`) Where the src repo exists
+* `SRCTOP`: (Default: `/usr/src`) Where the src repo exists, along with which architectures to build for each src (see `SRCTOP` section below for more information)
 * `CONFTOP`: (Default: `files/`) Where to find configuration files
 * `PKGTOP`: (Default: `$PREFIX/pkgbase`) Parent directory for the repo symlink
 * `MAKE_ENV`: (Default: none) Environment to run make in
@@ -25,4 +25,20 @@ All of these names are subject to change in the future, because they seem like a
 * `CONFPREFIX`: (Default: `conf-`) Prefix to be used for configuration files in $CONFTOP -- this prefix will be stripped from the files when symlinks are created in src/sys/$ARCH/conf
 * `IGNOREEXPR`: (Default: none) Regex to use in discarding some config files from the build
 * `NOTAG`: (Default: none) If set to anything other than "", don't attempt to `git tag` this build
-* `BUILDARCHS`: (Default: all in `$CONFTOP`) Architectures to build/package for
+
+# SRCTOP
+As of multisrc inclusion into `freebsd-pkgbase-build`, `SRCTOP` is used to specify which architectures get built out of which src tree. If no architectures are specified, then *all* architectures that you specify configs for (in `CONFTOP`) will be built for that src tree. `freebsd-pkgbase-build` expects `SRCTOP` values of the form:
+
+    SRCTOP= {PATH}:{ARCH}.{TARGET_ARCH}
+
+e.g.
+
+    SRCTOP= /usr/src /usr/src.11:arm.armv6,arm64.aarch64
+
+In this example, /usr/src will have *everything* that we specify configs for built. /usr/src.11 will only have armv6 and aarch64 targets built.
+
+# Additional considerations
+Please do keep in mind that while you may have multiple src trees of the same major OS version, you *cannot* have multiple src trees of the same major version producing pkgbase repos for the same archs due to the `pkg(8)` ABI scheme. Because of this, special consideration must be made when including multiple src trees for the same major version (e.g. release/11.0.1 and stable/11) to make sure that you aren't building two FreeBSD 11 ARMv6 pkgbase repositories.
+
+This limitation may be removed in a future version, should I decide to support multiple `PKGTOP` specifications-- at that point, one could tag a src tree for a specific pkgbase repo to avoid collisions.
+
