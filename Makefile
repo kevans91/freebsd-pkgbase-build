@@ -21,7 +21,6 @@ ARCH_DIRS!=	find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!!
 NUMCPU!=	sysctl -n hw.ncpu
 NUMTHREADS!=	echo $$(( ${NUMCPU} + ${NUMCPU} ))
 
-BUILDARCHS?=		${ARCH_DIRS}
 MAKE_JOBS_NUMBER?=	${NUMTHREADS}
 MAKE_ARGS+=		-j${MAKE_JOBS_NUMBER}
 
@@ -40,6 +39,7 @@ WRKDIR_MAKE=		[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
 
 CONFPATTERN=${CONFPREFIX}(.+)
 ALL_SRCARCH:=		# For validation
+BUILDARCHS:=		# For later iteration -- all architectures to build
 
 .for src in ${SRCTOP}
 _src:=			${src:C/\:.*//}
@@ -65,6 +65,11 @@ _srcarch:=		${${_src}_REVISION}${_arch}
 .error Multiply defined version/arch combinations for ${_arch} (used: ${ALL_SRCARCH})
 .else
 ALL_SRCARCH:=		${ALL_SRCARCH} ${_srcarch}
+SRCTOP_${_arch}:=	${SRCTOP_${_arch}} ${_src}
+
+.if !${BUILDARCHS:M${_arch}}
+BUILDARCHS:=		${BUILDARCHS} ${_arch}
+.endif
 .endif
 .endif
 .endfor
@@ -79,7 +84,8 @@ MACHINE_ARCH!=	make -C ${_src} -V MACHINE_ARCH
 .endfor
 
 .for _arch in ${ARCH_DIRS}
-.if 0 #${ALL_ARCHS:M${_arch}} && ${BUILDARCHS:M${_arch}}
+# We now construct BUILDARCHS from SRCTOP information... ugh. It's valid, though
+.if ${BUILDARCHS:M${_arch}}
 BUILDARCH+=		${_arch}
 TARGET_${_arch}=	${_arch:C/\..+//}
 TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
@@ -94,7 +100,10 @@ CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/$
 .endif
 
 CONFIGS_${_arch}=	${CONFIGFILES_${_arch}:C/${ARCHTOP_${_arch}}\///:C/${CONFPATTERN}/\1/}
-CONFDEST_${_arch}=	${SRCTOP_${_arch}}/sys/${TARGET_${_arch}}/conf
+.for _srctop in ${SRCTOP_${_arch}}
+ALL_CONFDEST_${_arch}:=	${ALL_CONFDEST_${_arch}} ${_srctop}/sys/${TARGET_${_arch}}/conf
+.endfor
+
 MAKE_ARGS_${_arch}+=	${MAKE_ARGS} KERNCONF="${KERNCONF} ${CONFIGS_${_arch}:C/^\w*(.*)/\\1/}"
 
 .if ${MACHINE} != ${TARGET_${_arch}} && ${MACHINE_ARCH} != ${TARGET_ARCH_${_arch}}
@@ -113,28 +122,37 @@ OBJDIRPREFIX_${_arch}=	${OBJTOP}
 	# Tag the repository for this arch, unless we're not tagging
 tag-${_arch}:
 	@if [ "${NOTAG}" == "" ] && [ `which git` ]; then \
-		(cd ${SRCTOP_${_arch}} && git tag "build/${BUILDTAG_${_arch}}/${TAGDATE}"); \
+		for _srctop in ${SRCTOP_${_arch}}; do \
+			if [ -e $${_srctop}/.git ]; then \
+				(cd $${_srctop} && git tag "build/${BUILDTAG_${_arch}}/${TAGDATE}"); \
+			fi; \
+		done; \
 	fi
 
 	# Clean up any kernel configs that have disappeared. Ensure that we have
 	# symlinks for all of the configurations we're using. If there's a difference,
 	# remove the in-tree kernconf and re-symlink it Otherwise, leave it be.
 config-${_arch}:
-	@for _cfgfile in `${FIND} "${CONFDEST_${_arch}}/" -lname "${CONFTOP}/*"`; do \
-		if [ ! -e "$${_cfgfile}" ]; then \
-			${RM} "$${_cfgfile}"; \
-		fi; \
-	done;
-	@for _cfg in ${CONFIGS_${_arch}}; do \
-		if [ -e "${CONFDEST_${_arch}}/$${_cfg}" ]; then \
-			${DIFF} "${CONFDEST_${_arch}}/$${_cfg}" "${ARCHTOP_${_arch}}/${CONFPREFIX}$${_cfg}"; \
-			if [ $$? -ne 0 ]; then \
-				${RM} "${CONFDEST_${_arch}}/$${_cfg}"; \
+	@for _cfgdest in ${ALL_CONFDEST_${_arch}}; do \
+		for _cfgfile in `${FIND} "$${_cfgdest}/" -lname "${CONFTOP}/*"`; do \
+			if [ ! -e "$${_cfgfile}" ]; then \
+				${RM} "$${_cfgfile}"; \
 			fi; \
-		fi; \
-		if [ ! -e "${CONFDEST_${_arch}}/$${_cfg}" ]; then \
-			${LN} -s "${ARCHTOP_${_arch}}/${CONFPREFIX}$${_cfg}" "${CONFDEST_${_arch}}/$${_cfg}"; \
-		fi; \
+		done; \
+	done;
+
+	@for _cfg in ${CONFIGS_${_arch}}; do \
+		for _cfgdest in ${ALL_CONFDEST_${_arch}}; do \
+			if [ -e "$${_cfgdest}/$${_cfg}" ]; then \
+				${DIFF} "$${_cfgdest}/$${_cfg}" "${ARCHTOP_${_arch}}/${CONFPREFIX}$${_cfg}"; \
+				if [ $$? -ne 0 ]; then \
+					${RM} "$${_cfgdest}/$${_cfg}"; \
+				fi; \
+			fi; \
+			if [ ! -e "$${_cfgdest}/$${_cfg}" ]; then \
+				${LN} -s "${ARCHTOP_${_arch}}/${CONFPREFIX}$${_cfg}" "$${_cfgdest}/$${_cfg}"; \
+			fi; \
+		done; \
 	done;
 
 	# Build world for this architecture
