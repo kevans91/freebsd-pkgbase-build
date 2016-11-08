@@ -57,7 +57,9 @@ ${_src}_ARCHS+=		${ARCH_DIRS}
 # The latter would result in ABI collision
 .for _arch in ${${_src}_ARCHS}
 .if ! ${${_src}_ALL_ARCHS:M${_arch}}
+.if VERBOSE
 .warning ${_arch} not valid in ${_src} context
+.endif
 ${_src}_ARCHS:=		${${_src}_ARCHS:C/${_arch}//}
 .else
 _srcarch:=		${${_src}_REVISION}${_arch}
