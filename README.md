@@ -37,6 +37,8 @@ e.g.
 
 In this example, /usr/src will have *everything* that we specify configs for built. /usr/src.11 will only have armv6 and aarch64 targets built.
 
+The default behavior for SRCTOP is to use `/usr/src` for all configured architectures. This should be the most useful for the most people.
+
 # Additional considerations
 Please do keep in mind that while you may have multiple src trees of the same major OS version, you *cannot* have multiple src trees of the same major version producing pkgbase repos for the same archs due to the `pkg(8)` ABI scheme. Because of this, special consideration must be made when including multiple src trees for the same major version (e.g. release/11.0.1 and stable/11) to make sure that you aren't building two FreeBSD 11 ARMv6 pkgbase repositories.
 
