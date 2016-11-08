@@ -46,7 +46,8 @@ _src:=			${src:C/\:.*//}
 ALL_SRCTOP:=		${ALL_SRCTOP} ${_src}
 ${_src}_ARCHS:=		${src:C/^[^\:]*(\:|\$)//:S/,/ /g}
 ${_src}_ALL_ARCHS!=	make -C ${_src} targets | grep -e '^ ' | sed -e 's/    //' -e's|/|.|'
-${_src}_REVISION!=	make -C ${_src}/release -V REVISION
+_revision!=		make -C ${_src}/release -V REVISION
+${_src}_REVISION:=	${_revision:C/\..*//}
 ALL_REPOS:=		${ALL_REPOS} ${OBJTOP}${_src}/repo
 
 .if empty(${_src}_ARCHS)
