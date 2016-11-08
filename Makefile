@@ -18,11 +18,6 @@ IGNOREEXPR?=
 
 ARCH_DIRS!=	find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!!g' -e 's!${CONFTOP}!!g'
 
-ALL_ARCHS!=	cd ${SRCTOP} && make targets | grep -e '^ ' | sed -e 's/    //' -e's|/|.|'
-MACHINE!=	make -C ${SRCTOP} -V MACHINE
-MACHINE_ARCH!=	make -C ${SRCTOP} -V MACHINE_ARCH
-ALL_REPOS+=	${OBJTOP}${SRCTOP}/repo
-
 NUMCPU!=	sysctl -n hw.ncpu
 NUMTHREADS!=	echo $$(( ${NUMCPU} + ${NUMCPU} ))
 
@@ -44,9 +39,46 @@ ECHO_TIME=		${ECHO_CMD} `date +"%s"`
 WRKDIR_MAKE=		[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
 
 CONFPATTERN=${CONFPREFIX}(.+)
+ALL_SRCARCH:=		# For validation
+
+.for src in ${SRCTOP}
+_src:=			${src:C/\:.*//}
+ALL_SRCTOP+=		${_src}
+${_src}_ARCHS:=		${src:C/^[^\:]*(\:|\$)//:S/,/ /g}
+${_src}_ALL_ARCHS!=	cd ${_src} && make targets | grep -e '^ ' | sed -e 's/    //' -e's|/|.|'
+${_src}_REVISION!=	make -C ${_src}/release -V REVISION
+ALL_REPOS+=		${OBJTOP}${_src}/repo
+
+.if empty(${${_src}_ARCHS})
+${_src}_ARCHS+=		${ARCH_DIRS}
+.endif
+
+# Validate _ARCHS vs. _ALL_ARCHS and make sure we don't have multiply defined osrel+arch combos
+# The latter would result in ABI collision
+.for _arch in ${${_src}_ARCHS}
+.if ! ${${_src}_ALL_ARCHS:M${_arch}}
+.warning ${_arch} not valid in ${_src} context
+.else
+_srcarch:=		${${_src}_REVISION}${_arch}
+.if ${ALL_SRCARCH:M${_srcarch}}
+.error Multiply defined version/arch combinations for ${_arch}
+.else
+ALL_SRCARCH:=		${ALL_SRCARCH} ${_srcarch}
+.endif
+.endif
+.endfor
+
+.if empty(${MACHINE})
+MACHINE!=	make -C ${_src} -V MACHINE
+.endif
+
+.if empty(${MACHINE_ARCH})
+MACHINE_ARCH!=	make -C ${_src} -V MACHINE_ARCH
+.endif
+.endfor
 
 .for _arch in ${ARCH_DIRS}
-.if ${ALL_ARCHS:M${_arch}} && ${BUILDARCHS:M${_arch}}
+.if 0 #${ALL_ARCHS:M${_arch}} && ${BUILDARCHS:M${_arch}}
 BUILDARCH+=		${_arch}
 TARGET_${_arch}=	${_arch:C/\..+//}
 TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
