@@ -123,7 +123,7 @@ tag-${_arch}:
 	@if [ "${NOTAG}" == "" ] && [ `which git` ]; then \
 		for _srctop in ${SRCTOP_${_arch}}; do \
 			if [ -e $${_srctop}/.git ]; then \
-				(cd $${_srctop} && git tag "build/${BUILDTAG_${_arch}}/${TAGDATE}"); \
+				env GIT_DIR=$${_srctop}/.git git tag "build/${BUILDTAG_${_arch}}/${TAGDATE}"; \
 			fi; \
 		done; \
 	fi
