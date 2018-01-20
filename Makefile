@@ -16,6 +16,7 @@ KERNCONF?=	GENERIC
 CONFPREFIX?=	conf-
 IGNOREEXPR?=
 
+# We'll populate this later if this didn't pick up everything
 ARCH_DIRS!=	find ${CONFTOP} -type d ! -path ${CONFTOP} | sed -e 's!${CONFTOP}/!!g' -e 's!${CONFTOP}!!g'
 
 NUMCPU!=	sysctl -n hw.ncpu
@@ -51,7 +52,18 @@ ${_src}_REVISION:=	${_revision:C/\..*//}
 ALL_REPOS:=		${ALL_REPOS} ${OBJTOP}${_src}/repo
 
 .if empty(${_src}_ARCHS)
+.warning "Here"
+.	if empty(${ARCH_DIRS})
+.error "No idea what archs we are are packaging for... please create archdirs in files/, or specify in SRCTOP what archs apply."
+.	endif
 ${_src}_ARCHS+=		${ARCH_DIRS}
+.else
+# See if we need to populate ARCH_DIRS
+.	for _arch in ${${_src}_ARCHS}
+.		if empty(${ARCH_DIRS:M${_arch}})
+ARCH_DIRS+=	${_arch}
+.		endif
+.	endfor
 .endif
 
 # Validate _ARCHS vs. _ALL_ARCHS and make sure we don't have multiply defined osrel+arch combos
@@ -94,11 +106,16 @@ TARGET_${_arch}=	${_arch:C/\..+//}
 TARGET_ARCH_${_arch}=	${_arch:C/.+\.//}
 BUILDTAG_${_arch}=	${TARGET_ARCH_${_arch}}
 ARCHTOP_${_arch}=	${CONFTOP}/${_arch}
+ARCHTOP_${_arch}_EXISTS!=	([ -e ${ARCHTOP_${_arch}} ] && echo "YES") || echo "NO"
 
-.if !empty(IGNOREEXPR)
+.if !empty(${ARCHTOP_${_arch}}:MYES)
+.	if !empty(IGNOREEXPR)
 CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/${CONFPATTERN}" ! -regex ${IGNOREEXPR}
-.else
+.	else
 CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/${CONFPATTERN}"
+.	endif
+.else
+CONFIGFILES_${_arch}=
 .endif
 
 CONFIGS_${_arch}=	${CONFIGFILES_${_arch}:C/${ARCHTOP_${_arch}}\///:C/${CONFPATTERN}/\1/}
