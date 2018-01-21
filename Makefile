@@ -123,7 +123,8 @@ CONFIGS_${_arch}=	${CONFIGFILES_${_arch}:C/${ARCHTOP_${_arch}}\///:C/${CONFPATTE
 ALL_CONFDEST_${_arch}:=	${ALL_CONFDEST_${_arch}} ${_srctop}/sys/${TARGET_${_arch}}/conf
 .endfor
 
-MAKE_ARGS_${_arch}+=	${MAKE_ARGS} KERNCONF="${KERNCONF} ${CONFIGS_${_arch}:C/^\w*(.*)/\\1/}"
+ALL_KERNCONFS_${_arch}=	${KERNCONF} ${CONFIGS_${_arch}:C/^\w*(.*)/\\1/}
+MAKE_ARGS_${_arch}+=	${MAKE_ARGS} KERNCONF="${ALL_KERNCONFS_${_arch}}"
 
 .if ${MACHINE} != ${TARGET_${_arch}} && ${MACHINE_ARCH} != ${TARGET_ARCH_${_arch}}
 MAKE_ARGS_${_arch}+=	TARGET=${TARGET_${_arch}} TARGET_ARCH=${TARGET_ARCH_${_arch}}
