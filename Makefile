@@ -52,7 +52,6 @@ ${_src}_REVISION:=	${_revision:C/\..*//}
 ALL_REPOS:=		${ALL_REPOS} ${OBJTOP}${_src}/repo
 
 .if empty(${_src}_ARCHS)
-.warning "Here"
 .	if empty(${ARCH_DIRS})
 .error "No idea what archs we are are packaging for... please create archdirs in files/, or specify in SRCTOP what archs apply."
 .	endif
@@ -209,7 +208,6 @@ config:
 	${ECHO_CMD} "== PHASE: Install Config =="
 	${ECHO_TIME} > ${WRKDIR}/config.start
 	@for tgt in ${CONFIG_TGTS}; do \
-		echo $${tgt}; \
 		make -C ${.CURDIR} $${tgt}; \
 	done
 	${ECHO_TIME} > ${WRKDIR}/config.end
@@ -219,7 +217,6 @@ build-world:	config
 	${ECHO_CMD} "== PHASE: Build World =="
 	${ECHO_TIME} > ${WRKDIR}/build-world.start
 	@for tgt in ${BUILDWORLD_TGTS}; do \
-		echo $${tgt}; \
 		make -C ${.CURDIR} $${tgt}; \
 	done
 	${ECHO_TIME} > ${WRKDIR}/build-world.end
@@ -229,7 +226,6 @@ build-kernel:	config
 	${ECHO_CMD} "== PHASE: Build Kernel =="
 	${ECHO_TIME} > ${WRKDIR}/build-kernel.start
 	@for tgt in ${BUILDKERNEL_TGTS}; do \
-		echo $${tgt}; \
 		make -C ${.CURDIR} $${tgt}; \
 	done
 	${ECHO_TIME} > ${WRKDIR}/build-kernel.end
