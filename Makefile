@@ -171,23 +171,50 @@ config-${_arch}:
 		done; \
 	done;
 
+WLOG=	${WRKDIR}/build-world-${_arch}.log
+KLOG=	${WRKDIR}/build-kernel-${_arch}.log
+PLOG=	${WRKDIR}/packages-${_arch}.log
+
 	# Build world for this architecture
+# Major subshell hack to get equivalent of bash's pipefail was stolen from:
+# https://unix.stackexchange.com/a/70675 (user: lesmana)
 build-world-${_arch}:
+	@${RM} ${WLOG};
 	@for _srctop in ${SRCTOP_${_arch}}; do \
-		${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} buildworld; \
+		((((${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} \
+		    buildworld; echo $$? >&3) | tee ${WLOG} >&4) 3>&1) | \
+		    (read xs; exit $$xs})) 4>&1; \
+		ret=$$?; \
+		if [ "$$ret" -ne 0 ]; then \
+			exit $$ret; \
+		fi; \
 	done;
 
 	# Build kernel for this architecture
 build-kernel-${_arch}:
+	@${RM} ${KLOG};
 	@for _srctop in ${SRCTOP_${_arch}}; do \
-		${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} buildkernel; \
+		((((${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} \
+		    buildkernel; echo $$? >&3) | tee ${KLOG} >&4) 3>&1) | \
+		    (read xs; exit $$xs})) 4>&1; \
+		ret=$$?; \
+		if [ "$$ret" -ne 0 ]; then \
+			exit $$ret; \
+		fi; \
 	done;
 
 	# Build packages for this architecture
 	# This is needed because the actual OBJDIR is based on TARGET/TARGET_ARCH
 packages-${_arch}:
+	@${RM} ${PLOG};
 	@for _srctop in ${SRCTOP_${_arch}}; do \
-		${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} packages; \
+		((((${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} \
+		    buildkernel; echo $$? >&3) | tee ${PLOG} >&4) 3>&1) | \
+		    (read xs; exit $$xs})) 4>&1 ; \
+		ret=$$?; \
+		if [ "$$ret" -ne 0 ]; then \
+			exit $$ret; \
+		fi; \
 	done
 
 TAG_TGTS+=		tag-${_arch}
