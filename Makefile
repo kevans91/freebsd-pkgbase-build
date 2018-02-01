@@ -183,7 +183,7 @@ build-world-${_arch}:
 	@for _srctop in ${SRCTOP_${_arch}}; do \
 		((((${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} \
 		    buildworld; echo $$? >&3) | tee ${WLOG} >&4) 3>&1) | \
-		    (read xs; exit $$xs})) 4>&1; \
+		    (read xs; exit $$xs)) 4>&1; \
 		ret=$$?; \
 		if [ "$$ret" -ne 0 ]; then \
 			exit $$ret; \
@@ -196,7 +196,7 @@ build-kernel-${_arch}:
 	@for _srctop in ${SRCTOP_${_arch}}; do \
 		((((${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} \
 		    buildkernel; echo $$? >&3) | tee ${KLOG} >&4) 3>&1) | \
-		    (read xs; exit $$xs})) 4>&1; \
+		    (read xs; exit $$xs)) 4>&1; \
 		ret=$$?; \
 		if [ "$$ret" -ne 0 ]; then \
 			exit $$ret; \
@@ -210,7 +210,7 @@ packages-${_arch}:
 	@for _srctop in ${SRCTOP_${_arch}}; do \
 		((((${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} \
 		    buildkernel; echo $$? >&3) | tee ${PLOG} >&4) 3>&1) | \
-		    (read xs; exit $$xs})) 4>&1 ; \
+		    (read xs; exit $$xs)) 4>&1 ; \
 		ret=$$?; \
 		if [ "$$ret" -ne 0 ]; then \
 			exit $$ret; \
