@@ -60,7 +60,7 @@ ${_src}_ARCHS+=		${ARCH_DIRS}
 .else
 # See if we need to populate ARCH_DIRS
 .	for _arch in ${${_src}_ARCHS}
-.		if empty(${ARCH_DIRS:M${_arch}})
+.		if empty(${ARCH_DIRS:M${_arch}:L})
 ARCH_DIRS+=	${_arch}
 .		endif
 .	endfor
