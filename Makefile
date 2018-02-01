@@ -271,7 +271,6 @@ packages:	build
 	${ECHO_CMD} "== PHASE: Install Packages =="
 	${ECHO_TIME} > ${WRKDIR}/packages.start
 	@for tgt in ${PACKAGE_TGTS}; do \
-		echo $${tgt}; \
 		make -C ${.CURDIR} $${tgt}; \
 	done
 
