@@ -107,7 +107,7 @@ BUILDTAG_${_arch}=	${TARGET_ARCH_${_arch}}
 ARCHTOP_${_arch}=	${CONFTOP}/${_arch}
 ARCHTOP_${_arch}_EXISTS!=	([ -e ${ARCHTOP_${_arch}} ] && echo "YES") || echo "NO"
 
-.if !empty(${ARCHTOP_${_arch}}:MYES)
+.if ${ARCHTOP_${_arch}_EXISTS:MYES}
 .	if !empty(IGNOREEXPR)
 CONFIGFILES_${_arch}!=	find -E ${ARCHTOP_${_arch}} -regex "${ARCHTOP_${_arch}}/${CONFPATTERN}" ! -regex ${IGNOREEXPR}
 .	else
