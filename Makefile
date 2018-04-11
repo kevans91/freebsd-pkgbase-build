@@ -8,8 +8,13 @@ SRCTOP?=	/usr/src
 PKGTOP?=	${PREFIX}/pkgbase
 CONFTOP?=	${.CURDIR}/files
 WRKDIR?=	${.CURDIR}/work
+# Intentionally mis-named and normalized
+SRC_CONF?=	/dev/null
+SRC_ENV_CONF?=	/dev/null
+MAKE_CONF?=	/dev/null
 MAKE_ARGS+=	${PKGBASE_MAKE_ARGS}
 MAKE_ARGS+=	NO_INSTALLEXTRAKERNELS=no
+MAKE_ARGS+=	SRCCONF=${SRC_CONF} _SRC_ENV_CONF=${SRC_ENV_CONF} __MAKE_CONF=${MAKE_CONF}
 KERNCONF?=	GENERIC
 
 # Only pull files from ${CONFTOP} with this prefix
