@@ -52,7 +52,7 @@ ${_src}_REVISION:=	${_revision:C/\..*//}
 ALL_REPOS:=		${ALL_REPOS} ${OBJTOP}${_src}/repo
 
 .if empty(${_src}_ARCHS)
-.	if empty(${ARCH_DIRS})
+.	if empty(ARCH_DIRS)
 .error "No idea what archs we are are packaging for... please create archdirs in files/, or specify in SRCTOP what archs apply."
 .	endif
 ${_src}_ARCHS+=		${ARCH_DIRS}
