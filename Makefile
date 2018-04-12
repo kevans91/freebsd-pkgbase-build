@@ -8,6 +8,17 @@ SRCTOP?=	/usr/src
 PKGTOP?=	${PREFIX}/pkgbase
 CONFTOP?=	${.CURDIR}/files
 WRKDIR?=	${.CURDIR}/work
+
+# Local SRCCONF
+.if empty(SRC_CONF)
+_SRC_CONF=	${CONFTOP}/src.conf
+_SRC_CONF_EXISTS!=	[ -f ${_SRC_CONF} ] && echo ${_SRC_CONF} || echo ""
+
+.if !empty(_SRC_CONF_EXISTS)
+SRC_CONF=	${_SRC_CONF}
+.endif
+.endif
+
 # Intentionally mis-named and normalized
 SRC_CONF?=	/dev/null
 SRC_ENV_CONF?=	/dev/null
