@@ -28,6 +28,10 @@ MAKE_ARGS+=	NO_INSTALLEXTRAKERNELS=no
 MAKE_ARGS+=	SRCCONF=${SRC_CONF} _SRC_ENV_CONF=${SRC_ENV_CONF} __MAKE_CONF=${MAKE_CONF}
 KERNCONF?=	GENERIC
 
+.if ${.MAKEFLAGS:M-s} == "-s"
+MAKE_ARGS+=	-s
+.endif
+
 # Only pull files from ${CONFTOP} with this prefix
 CONFPREFIX?=	conf-
 IGNOREEXPR?=
