@@ -54,8 +54,7 @@ MKDIR=			mkdir -p
 RM=			rm -f
 CHFLAGS=		chflags -R
 SETENV=			env
-ECHO_CMD=		@echo
-ECHO_TIME=		${ECHO_CMD} `date +"%s"`
+ECHO_TIME=		@echo `date +"%s"`
 WRKDIR_MAKE=		[ -e "${WRKDIR}" ] || ${MKDIR} "${WRKDIR}"
 
 CONFPATTERN=${CONFPREFIX}(.+)
@@ -252,31 +251,31 @@ tag:	${TAG_TGTS}
 	# * A wrapper to do profiling for each target's full run
 config:
 	${WRKDIR_MAKE}
-	${ECHO_CMD} "== PHASE: Install Config =="
+	@echo "== PHASE: Install Config =="
 	${ECHO_TIME} > ${WRKDIR}/config.start
 	@for tgt in ${CONFIG_TGTS}; do \
 		make -C ${.CURDIR} $${tgt}; \
 	done
 	${ECHO_TIME} > ${WRKDIR}/config.end
-	${ECHO_CMD} "== END PHASE: Install Config (" $$((`cat ${WRKDIR}/config.end` - `cat ${WRKDIR}/config.start`)) "s) =="
+	@echo "== END PHASE: Install Config (" $$((`cat ${WRKDIR}/config.end` - `cat ${WRKDIR}/config.start`)) "s) =="
 
 build-world:	config
-	${ECHO_CMD} "== PHASE: Build World =="
+	@echo "== PHASE: Build World =="
 	${ECHO_TIME} > ${WRKDIR}/build-world.start
 	@for tgt in ${BUILDWORLD_TGTS}; do \
 		make -C ${.CURDIR} $${tgt}; \
 	done
 	${ECHO_TIME} > ${WRKDIR}/build-world.end
-	${ECHO_CMD} "== END PHASE: Build World (" $$((`cat ${WRKDIR}/build-world.end` - `cat ${WRKDIR}/build-world.start`)) "s) =="
+	@echo "== END PHASE: Build World (" $$((`cat ${WRKDIR}/build-world.end` - `cat ${WRKDIR}/build-world.start`)) "s) =="
 
 build-kernel:	config
-	${ECHO_CMD} "== PHASE: Build Kernel =="
+	@echo "== PHASE: Build Kernel =="
 	${ECHO_TIME} > ${WRKDIR}/build-kernel.start
 	@for tgt in ${BUILDKERNEL_TGTS}; do \
 		make -C ${.CURDIR} $${tgt}; \
 	done
 	${ECHO_TIME} > ${WRKDIR}/build-kernel.end
-	${ECHO_CMD} "== END PHASE: Build Kernel (" $$((`cat ${WRKDIR}/build-kernel.end` - `cat ${WRKDIR}/build-kernel.start`)) "s) =="
+	@echo "== END PHASE: Build Kernel (" $$((`cat ${WRKDIR}/build-kernel.end` - `cat ${WRKDIR}/build-kernel.start`)) "s) =="
 
 build:		tag config build-world build-kernel
 
@@ -288,7 +287,7 @@ build:		tag config build-world build-kernel
 	# actually symlinks individual ABI directories into it, to
 	# easily support multiarch pkgbase builds
 packages:	build
-	${ECHO_CMD} "== PHASE: Install Packages =="
+	@echo "== PHASE: Install Packages =="
 	${ECHO_TIME} > ${WRKDIR}/packages.start
 	@for tgt in ${PACKAGE_TGTS}; do \
 		make -C ${.CURDIR} $${tgt}; \
@@ -309,7 +308,7 @@ packages:	build
 	done;
 
 	${ECHO_TIME} > ${WRKDIR}/packages.end
-	${ECHO_CMD} "== END PHASE: Install Packages (" $$((`cat ${WRKDIR}/packages.end` - `cat ${WRKDIR}/packages.start`)) "s) =="
+	@echo "== END PHASE: Install Packages (" $$((`cat ${WRKDIR}/packages.end` - `cat ${WRKDIR}/packages.start`)) "s) =="
 
 	# This is really a target for cleaning 'local' things
 clean:
