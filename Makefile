@@ -3,8 +3,8 @@
 .sinclude "${.CURDIR}/Makefile.local"
 
 PREFIX?=	/usr/local
-OBJTOP?=	/usr/obj
-SRCTOP?=	/usr/src
+PB_OBJTOP?=	/usr/obj
+PB_SRCTOP?=	/usr/src
 PKGTOP?=	${PREFIX}/pkgbase
 CONFTOP?=	${.CURDIR}/files
 WRKDIR?=	${.CURDIR}/work
@@ -70,18 +70,18 @@ CONFPATTERN=${CONFPREFIX}(.+)
 ALL_SRCARCH:=		# For validation
 BUILDARCHS:=		# For later iteration -- all architectures to build
 
-.for src in ${SRCTOP}
+.for src in ${PB_SRCTOP}
 _src:=			${src:C/\:.*//}
-ALL_SRCTOP:=		${ALL_SRCTOP} ${_src}
+ALL_PB_SRCTOP:=		${ALL_PB_SRCTOP} ${_src}
 ${_src}_ARCHS:=		${src:C/^[^\:]*(\:|\$)//:S/,/ /g}
 ${_src}_ALL_ARCHS!=	make -C ${_src} targets | grep -e '^ ' | sed -e 's/    //' -e's|/|.|'
 _revision!=		make -C ${_src}/release -V REVISION
 ${_src}_REVISION:=	${_revision:C/\..*//}
-ALL_REPOS:=		${ALL_REPOS} ${OBJTOP}${_src}/repo
+ALL_REPOS:=		${ALL_REPOS} ${PB_OBJTOP}${_src}/repo
 
 .if empty(${_src}_ARCHS)
 .	if empty(ARCH_DIRS)
-.error "No idea what archs we are are packaging for... please create archdirs in files/, or specify in SRCTOP what archs apply."
+.error "No idea what archs we are are packaging for... please create archdirs in files/, or specify in PB_SRCTOP what archs apply."
 .	endif
 ${_src}_ARCHS+=		${ARCH_DIRS}
 .else
@@ -107,7 +107,7 @@ _srcarch:=		${${_src}_REVISION}${_arch}
 .error Multiply defined version/arch combinations for ${_arch} (used: ${ALL_SRCARCH})
 .else
 ALL_SRCARCH:=		${ALL_SRCARCH} ${_srcarch}
-SRCTOP_${_arch}:=	${SRCTOP_${_arch}} ${_src}
+PB_SRCTOP_${_arch}:=	${PB_SRCTOP_${_arch}} ${_src}
 
 .if empty(BUILDARCHS:M${_arch})
 BUILDARCHS:=		${BUILDARCHS} ${_arch}
@@ -126,7 +126,7 @@ MACHINE_ARCH!=	make -C ${_src} -V MACHINE_ARCH
 .endfor
 
 .for _arch in ${ARCH_DIRS}
-# We now construct BUILDARCHS from SRCTOP information... ugh. It's valid, though
+# We now construct BUILDARCHS from PB_SRCTOP information... ugh. It's valid, though
 .if !empty(BUILDARCHS:M${_arch})
 BUILDARCH+=		${_arch}
 TARGET_${_arch}=	${_arch:C/\..+//}
@@ -146,7 +146,7 @@ CONFIGFILES_${_arch}=
 .endif
 
 CONFIGS_${_arch}=	${CONFIGFILES_${_arch}:C/${ARCHTOP_${_arch}}\///:C/${CONFPATTERN}/\1/}
-.for _srctop in ${SRCTOP_${_arch}}
+.for _srctop in ${PB_SRCTOP_${_arch}}
 ALL_CONFDEST_${_arch}:=	${ALL_CONFDEST_${_arch}} ${_srctop}/sys/${TARGET_${_arch}}/conf
 .endfor
 
@@ -166,7 +166,7 @@ MAKE_ARGS_${_arch}+=	TARGET=${TARGET_${_arch}} TARGET_ARCH=${TARGET_ARCH_${_arch
 	# Tag the repository for this arch, unless we're not tagging
 tag-${_arch}:
 	@if [ "${NOTAG}" == "" ] && [ `which git` ]; then \
-		for _srctop in ${SRCTOP_${_arch}}; do \
+		for _srctop in ${PB_SRCTOP_${_arch}}; do \
 			if [ -e $${_srctop}/.git ]; then \
 				env GIT_DIR=$${_srctop}/.git git tag "build/${BUILDTAG_${_arch}}/${TAGDATE}"; \
 			fi; \
@@ -208,7 +208,7 @@ PLOG=	${WRKDIR}/packages-${_arch}.log
 # https://unix.stackexchange.com/a/70675 (user: lesmana)
 build-world-${_arch}:
 	@${RM} ${WLOG};
-	@for _srctop in ${SRCTOP_${_arch}}; do \
+	@for _srctop in ${PB_SRCTOP_${_arch}}; do \
 		((((${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} \
 		    buildworld; echo $$? >&3) | tee ${WLOG} >&4) 3>&1) | \
 		    (read xs; exit $$xs)) 4>&1; \
@@ -221,7 +221,7 @@ build-world-${_arch}:
 	# Build kernel for this architecture
 build-kernel-${_arch}:
 	@${RM} ${KLOG};
-	@for _srctop in ${SRCTOP_${_arch}}; do \
+	@for _srctop in ${PB_SRCTOP_${_arch}}; do \
 		((((${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} \
 		    buildkernel; echo $$? >&3) | tee ${KLOG} >&4) 3>&1) | \
 		    (read xs; exit $$xs)) 4>&1; \
@@ -235,7 +235,7 @@ build-kernel-${_arch}:
 	# This is needed because the actual OBJDIR is based on TARGET/TARGET_ARCH
 packages-${_arch}:
 	@${RM} ${PLOG};
-	@for _srctop in ${SRCTOP_${_arch}}; do \
+	@for _srctop in ${PB_SRCTOP_${_arch}}; do \
 		((((${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS_${_arch}} \
 		    packages; echo $$? >&3) | tee ${PLOG} >&4) 3>&1) | \
 		    (read xs; exit $$xs)) 4>&1 ; \
@@ -329,12 +329,12 @@ cleanall:
 	# Clean up architecture-specific stuff
 	# To be clear, this is really ony OBJDIR materials
 	# src stuff gets cleaned up inthe 'cleanall' target
-	if [ -e "${OBJTOP}/" ]; then \
-		${CHFLAGS} noschg "${OBJTOP}/"; \
-		${RM} -r "${OBJTOP}/"; \
+	if [ -e "${PB_OBJTOP}/" ]; then \
+		${CHFLAGS} noschg "${PB_OBJTOP}/"; \
+		${RM} -r "${PB_OBJTOP}/"; \
 	fi;
 
-	for _srctop in ${ALL_SRCTOP}; do \
+	for _srctop in ${ALL_PB_SRCTOP}; do \
 		${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS} cleandir; \
 		${SETENV} ${MAKE_ENV} make -C $${_srctop} ${MAKE_ARGS} cleandir; \
 	done;
