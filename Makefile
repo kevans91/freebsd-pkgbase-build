@@ -19,6 +19,15 @@ SRC_CONF=	${_SRC_CONF}
 .endif
 .endif
 
+.if empty(SRC_ENV_CONF)
+_SRC_ENV_CONF=	${CONFTOP}/src-env.conf
+_SRC_ENV_CONF_EXISTS!=	[ -f ${_SRC_ENV_CONF} ] && echo ${_SRC_ENV_CONF} || echo ""
+
+.if !empty(_SRC_ENV_CONF_EXISTS)
+SRC_ENV_CONF=	${_SRC_ENV_CONF}
+.endif
+.endif
+
 # Intentionally mis-named and normalized
 SRC_CONF?=	/dev/null
 SRC_ENV_CONF?=	/dev/null
