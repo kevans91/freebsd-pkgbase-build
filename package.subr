@@ -1,0 +1,69 @@
+#!/bin/sh
+
+get_arch_dirs() {
+	 find ${CONFTOP} -type d ! -path ${CONFTOP} | \
+		sed -e "s!${CONFTOP}/!!g" -e "s!${CONFTOP}!!g"
+}
+
+get_tag_date() {
+	date +'%Y%m%d-%H%M%S'
+}
+
+path_from_srctop() {
+	srctop=$1
+
+	echo "${srctop}" | sed -E -e 's/:.*//'
+}
+
+archs_from_srctop() {
+	srctop=$1
+
+	echo "${srctop}" | sed -E -e 's/^[^:]*(:|$)//' -e 's/,/ /g'
+}
+
+all_archs_from_srctop() {
+	srctop=$(path_from_srctop "$1")
+
+	make -C ${srctop} targets | grep -e '^ '| \
+		sed -e 's/    //' -e's|/|.|'
+}
+
+validate_archs_against_srctop() {
+	srctop=$(path_from_srctop "$1")
+	archs=$2
+
+	valid_archs=$(all_archs_from_srctop ${srctop})
+	for arch in ${archs}; do
+		echo ${valid_archs} | grep -q "[[:<:]]${arch}[[:>:]]"
+		[ $? -eq 0 ] || exit 1
+	done
+}
+
+revision_from_srctop() {
+	srctop=$(path_from_srctop "$1")
+
+	make -C ${srctop}/release -V REVISION 2>/dev/null | sed -E -e 's/\..*//'
+}
+
+get_make_jobs_number() {
+	if [ ! -z "${MAKE_JOBS_NUMBER}" ]; then
+		echo ${MAKE_JOBS_NUMBER}
+	fi
+
+	_ncpu=$(sysctl -n hw.ncpu)
+	_nthreads=$(( ncpu * 2 ))
+	echo ${_nthreads}
+}
+
+build_make_args() {
+	_args="${MAKE_ARGS} NO_INSTALLEXTRAKERNELS=no"
+	_args="${_args} SRCCONF=${SRC_CONF} _SRC_ENV_CONF=${SRC_ENV_CONF} __MAKE_CONF=${MAKE_CONF}"
+	case ${SILENT} in
+		[Yy][Ee][Ss])
+			_args="${_args} -s"
+			;;
+	esac
+	_args="${_args} -j$(get_make_jobs_number)"
+	echo ${_args}
+}
+
