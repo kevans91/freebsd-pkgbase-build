@@ -101,6 +101,7 @@ for srctop in ${SRCTOP}; do
 	csrctop=$(canonicalize_srctop "${srctop}")
 	archlist=$(cat ${SCRATCHDIR}/arch.${csrctop})
 	srctop=$(path_from_srctop "${SRCTOP}")
+
 	# First, we tag
 	if [ -z "${NOTAG}" ] && [ ! -z "${GIT}" ]; then
 		for arch in ${archlist}; do
@@ -131,20 +132,20 @@ for srctop in ${SRCTOP}; do
 	repodirs=""
 	# Let's start building!
 	for archspec in ${archlist}; do
-			WLOG=${WRKDIR}/build-world-${csrctop}-${archspec}.log
-			KLOG=${WRKDIR}/build-kernel-${csrctop}-${archspec}.log
-			PLOG=${WRKDIR}/packages-${csrctop}-${archspec}.log
+		WLOG=${WRKDIR}/build-world-${csrctop}-${archspec}.log
+		KLOG=${WRKDIR}/build-kernel-${csrctop}-${archspec}.log
+		PLOG=${WRKDIR}/packages-${csrctop}-${archspec}.log
 
-			${RM} ${WLOG}
-			${RM} ${KLOG}
-			${RM} ${PLOG}
+		${RM} ${WLOG}
+		${RM} ${KLOG}
+		${RM} ${PLOG}
 
-			args=$(build_make_args "${srctop}" "${archspec}")
-			KERNCONF=$(_get_kernconf_set "${archspec}")
-			_build_target buildworld "${WLOG}"
-			_build_target buildkernel "${KLOG}"
-			_build_target packages "${PLOG}"
-			repodirs="${repodirs} ${objtop}${srctop}/repo"
+		args=$(build_make_args "${srctop}" "${archspec}")
+		KERNCONF=$(_get_kernconf_set "${archspec}")
+		_build_target buildworld "${WLOG}"
+		_build_target buildkernel "${KLOG}"
+		_build_target packages "${PLOG}"
+		repodirs="${repodirs} ${OBJTOP}${srctop}/repo"
 	done
 
 	# Do /repo maintenance
