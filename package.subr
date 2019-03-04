@@ -1,8 +1,63 @@
 #!/bin/sh
 
+_get_kernconf_set() {
+	archspec=$1
+
+	# Which kernel configs? All of them!
+	configs=$(get_arch_configs "${archspec}")
+	cfglist="${KERNCONF}"
+	for cfg in ${configs}; do
+		cname=$(get_config_name "${cfg}")
+		# We don't need to add KERNCONF twice
+		[ "${cname}" != "${KERNCONF}" ] && cfglist="${cfglist} ${cname}"
+	done
+	echo ${cfglist}
+}
+
+_build_target() {
+	target=$1
+	logfile=$2
+
+	${SETENV} ${MAKE_ENV} KERNCONF="${KERNCONF}" make -C ${srctop} ${args} ${target} | \
+		tee ${logfile}
+}
+
+get_arch_configs() {
+	arch=$1
+
+	archpath=${CONFTOP}/${arch}
+	if [ -d "${archpath}" ]; then
+		cmd="find -E ${archpath} -regex \"${archpath}/${CONFPATTERN}\""
+
+		if [ ! -z "${IGNOREEXPR}" ]; then
+			cmd="${cmd} ! -regex ${IGNOREEXPR}"
+		fi
+
+		eval "${cmd}"
+	fi
+}
+
+get_config_name() {
+	filename=$(basename "$1")
+
+	echo ${filename} | sed -E -e "s/${CONFPATTERN}/\\1/"
+}
+
 get_arch_dirs() {
 	 find ${CONFTOP} -type d ! -path ${CONFTOP} | \
 		sed -e "s!${CONFTOP}/!!g" -e "s!${CONFTOP}!!g"
+}
+
+get_machine() {
+	archspec=$1
+
+	echo "${archspec}" | sed -E -e 's/\..+$//'
+}
+
+get_machine_arch() {
+	archspec=$1
+
+	echo "${archspec}" | sed -E -e 's/^[^.]*\.//'
 }
 
 get_tag_date() {
@@ -13,6 +68,12 @@ path_from_srctop() {
 	srctop=$1
 
 	echo "${srctop}" | sed -E -e 's/:.*//'
+}
+
+canonicalize_srctop() {
+	srctop=$(path_from_srctop "$1")
+
+	echo "${srctop}"| sed -e 's,/,_,g'
 }
 
 archs_from_srctop() {
@@ -51,19 +112,31 @@ get_make_jobs_number() {
 	fi
 
 	_ncpu=$(sysctl -n hw.ncpu)
-	_nthreads=$(( ncpu * 2 ))
+	_nthreads=$(( _ncpu * 2 ))
 	echo ${_nthreads}
 }
 
 build_make_args() {
+	srctop=$1
+	archspec=$2
+
+	# The basics
 	_args="${MAKE_ARGS} NO_INSTALLEXTRAKERNELS=no"
 	_args="${_args} SRCCONF=${SRC_CONF} _SRC_ENV_CONF=${SRC_ENV_CONF} __MAKE_CONF=${MAKE_CONF}"
+
+	# Carry on SILENT
 	case ${SILENT} in
 		[Yy][Ee][Ss])
 			_args="${_args} -s"
 			;;
 	esac
+	# Any jobs
 	_args="${_args} -j$(get_make_jobs_number)"
-	echo ${_args}
+
+	# TARGET/TARGET_ARCH
+	machine=$(get_machine "${archspec}")
+	machine_arch=$(get_machine_arch "${archspec}")
+	_args="${_args} TARGET=${machine} TARGET_ARCH=${machine_arch}"
+	echo "${_args}"
 }
 
