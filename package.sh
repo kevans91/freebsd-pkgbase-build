@@ -18,6 +18,7 @@ trap "rm -rf ${SCRATCHDIR}" exit
 : ${OBJTOP:=/usr/obj}
 : ${SRCTOP:=/usr/src}
 : ${PKGTOP:=${PREFIX}/pkgbase}
+: ${REPODIR:=${PKGTOP}/repo}
 
 : ${CONFTOP:=${SCRIPTDIR}/files}
 : ${WRKDIR:=${SCRIPTDIR}/work}
@@ -129,7 +130,6 @@ for srctop in ${SRCTOP}; do
 		done
 	done
 
-	repodirs=""
 	# Let's start building!
 	for archspec in ${archlist}; do
 		WLOG=${WRKDIR}/build-world-${csrctop}-${archspec}.log
@@ -145,16 +145,5 @@ for srctop in ${SRCTOP}; do
 		_build_target buildworld "${WLOG}"
 		_build_target buildkernel "${KLOG}"
 		_build_target packages "${PLOG}"
-		repodirs="${repodirs} ${OBJTOP}${srctop}/repo"
-	done
-
-	# Do /repo maintenance
-	[ ! -d "${PKGTOP}/repo" ] && ${MKDIR} "${PKGTOP}/repo"
-
-	for repodir in ${repodirs}; do
-		for abidir in $(${FIND} ${repodir} -type d -d 1); do
-			[ ! -e ${PKGTOP}/repo/$(basename ${abidir}) ] && \
-				${LN} -s ${abidir} ${PKGTOP}/repo
-		done
 	done
 done

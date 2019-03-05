@@ -18,8 +18,8 @@ _build_target() {
 	target=$1
 	logfile=$2
 
-	${SETENV} ${MAKE_ENV} KERNCONF="${KERNCONF}" make -C ${srctop} ${args} ${target} | \
-		tee ${logfile}
+	${SETENV} ${MAKE_ENV} REPODIR="${REPODIR}" KERNCONF="${KERNCONF}" \
+		make -C ${srctop} ${args} ${target} | tee ${logfile}
 }
 
 get_arch_configs() {
