@@ -142,8 +142,8 @@ for srctop in ${SRCTOP}; do
 
 		args=$(build_make_args "${srctop}" "${archspec}")
 		KERNCONF=$(_get_kernconf_set "${archspec}")
-		_build_target buildworld "${WLOG}"
-		_build_target buildkernel "${KLOG}"
+		_build_target buildworld "${WLOG}" && \
+		_build_target buildkernel "${KLOG}" && \
 		_build_target packages "${PLOG}"
 	done
 done
