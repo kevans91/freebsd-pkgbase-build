@@ -109,11 +109,11 @@ revision_from_srctop() {
 get_make_jobs_number() {
 	if [ ! -z "${MAKE_JOBS_NUMBER}" ]; then
 		echo ${MAKE_JOBS_NUMBER}
+	else
+		_ncpu=$(sysctl -n hw.ncpu)
+		_nthreads=$(( _ncpu * 2 ))
+		echo ${_nthreads}
 	fi
-
-	_ncpu=$(sysctl -n hw.ncpu)
-	_nthreads=$(( _ncpu * 2 ))
-	echo ${_nthreads}
 }
 
 build_make_args() {
